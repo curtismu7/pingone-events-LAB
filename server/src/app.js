@@ -18,7 +18,7 @@ import { WEBHOOK_PATHS, allowedExtraHosts, hasDoubledSlash, hostCheckFor, hostOf
 import { matchesBasic, requireBasic, webhookAuthorized } from './auth.js';
 import { createHealth } from './health.js';
 import { loadCast, verticalFrom, VERTICALS } from './cast.js';
-import { allSecretsFrom, dataDirFrom, hostedFrom, hostedProblems, modeFrom, pingoneFrom, pullProblemFrom, realAvailableFrom, realHosts, realProblemFrom, sinkFrom, sinkProblemFrom, sinkPublic, trustProxyHops, uiAuthFrom, webhookAuthFrom, webhookFrom } from './config.js';
+import { allSecretsFrom, dataDirFrom, hostedFrom, hostedProblems, modeFrom, pingoneFrom, pullProblemFrom, realAvailableFrom, realHosts, realProblemFrom, sinkFrom, sinkProblemFrom, sinkPublic, trustProxyHops, uiAuthFrom, webhookAuthFrom, webhookFrom, forwardOnStart } from './config.js';
 import { buildStory } from './story.js';
 import { DIAGRAM_NAMES, buildDiagram } from './diagramData.js';
 import { DELIVERY_SCENARIOS } from './eventsData.js';
@@ -118,7 +118,7 @@ export function createApp({
   // ---- the sinks -------------------------------------------------------------------------------------------------------------------
   // Forwarding starts OFF. The one exception is a HOSTED deployment whose owner set FORWARD_ON_START=1 in its settings (the Secret) and has the
   // cluster configured: a restarted pod then keeps forwarding instead of silently going quiet. Local never starts it on its own.
-  let realSink = null; let realForwarding = hosted && env.FORWARD_ON_START === '1' && Boolean(sinkFrom(env));
+  let realSink = null; let realForwarding = forwardOnStart(env);
   const realFetch = (...a) => (fetchImpl || globalThis.fetch)(...a);
   const getRealSink = () => {
     const cfg = sinkFrom(env);
