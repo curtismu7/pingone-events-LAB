@@ -273,6 +273,16 @@ test('no secret appears in any API response or any log line, even when the clust
   for (const s of secrets) assert.ok(!logged.join('\n').includes(s), `a log line contains ${s.slice(0, 6)}...`);
 });
 
+test('not hosted: the page\'s own test webhook works through a LAB_ALLOWED_HOSTS name (the lab-proxy), but an unlisted name is still refused', async () => {
+  await withServer(async (url) => {
+    const u = new URL(url);
+    const call = (host) => rawHttp(`${url}/webhook/pingone-events`, { method: 'POST', headers: { host: `${host}:${u.port}`, 'content-type': 'application/json', 'content-length': 2 }, body: '[]' });
+    assert.equal((await call('proxy.example')).status, 400, 'a listed name is this machine: the receiver runs (an empty batch is a 400, not a 401)');
+    assert.equal((await call('127.0.0.1')).status, 400, 'loopback still works');
+    assert.equal((await call('other.example')).status, 403, 'an unlisted name is refused by the host check');
+  }, { env: { LAB_ALLOWED_HOSTS: 'proxy.example' } });
+});
+
 test('the webhook paths refuse a non-loopback Host unless it is the configured public host, and the public host reaches nothing else', async () => {
   const pw = 'hook-credential-1234';
   await withServer(async (url) => {

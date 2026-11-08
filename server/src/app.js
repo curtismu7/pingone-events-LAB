@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { WEBHOOK_PATHS, hasDoubledSlash, hostCheckFor, hostOf, isLoopbackHost, isWebhookPath, sameOriginWritesFor } from './safety.js';
+import { WEBHOOK_PATHS, allowedExtraHosts, hasDoubledSlash, hostCheckFor, hostOf, isLoopbackHost, isWebhookPath, sameOriginWritesFor } from './safety.js';
 import { matchesBasic, requireBasic, webhookAuthorized } from './auth.js';
 import { createHealth } from './health.js';
 import { loadCast, verticalFrom, VERTICALS } from './cast.js';
@@ -155,7 +155,9 @@ export function createApp({
   const accessFor = (req, ws) => {
     if (webhookAuthorized(req, webhookAuth)) return 'credential';
     if (ws && modeFor(ws) === 'mock' && req.headers.origin && uiAuth && matchesBasic(req, uiAuth)) return 'page';
-    if (!hosted && isLoopbackHost(hostOf(req.headers.host))) return 'local';
+    // Not hosted: this machine. That includes a name the owner listed in LAB_ALLOWED_HOSTS (the family lab-proxy reaches the app as
+    // local.ping-devops.com): the host check already admits it for the page, so the page's own test webhook must work through it too.
+    if (!hosted && (isLoopbackHost(hostOf(req.headers.host)) || allowedExtraHosts(env).has(hostOf(req.headers.host)))) return 'local';
     return null;
   };
   const refuse = (res) => { if (webhookAuth?.basic) res.set('WWW-Authenticate', 'Basic realm="PingOne webhook", charset="UTF-8"'); return res.status(401).set('Cache-Control', 'no-store'); };
