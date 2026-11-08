@@ -12,6 +12,7 @@ services:
       - "127.0.0.1:${HOST_PORT:-7803}:7802"
     environment:
       PORT: "7802"
+      SHELF_URL: ${SHELF_URL:-http://127.0.0.1:4400}
       PEV_BIND: 0.0.0.0
       PEV_DATA_DIR: /data
       LAB_ALLOWED_HOSTS: ${LAB_ALLOWED_HOSTS:-local.ping-devops.com}
