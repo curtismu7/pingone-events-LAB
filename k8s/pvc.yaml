@@ -1,0 +1,11 @@
+# The event store (a ring buffer of the last 1000 events, written as one JSON file). Small on purpose. ReadWriteOnce, so one pod only.
+# No storageClassName: the cluster's default is used.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pingone-events-lab-data
+  labels: { app: pingone-events-lab }
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests: { storage: 1Gi }

@@ -1,0 +1,118 @@
+import { useCallback, useEffect, useState } from "react";
+import { DEFAULT_STEP_MS } from "../components/diagram";
+
+/**
+ * Step state for a React Flow diagram that walks its arrows in order. step === -1 means the walkthrough is off and the diagram looks as it
+ * always did; 0..total-1 is the arrow in focus.
+ *
+ * The shape matches DiagramControls: Simulate starts it playing, Pause/Resume
+ * toggle auto-advance, Prev/Next work while paused, Stop returns to off.
+ */
+export function useDiagramStepper(total) {
+  const [step, setStep] = useState(-1);
+  const [paused, setPaused] = useState(false);
+  const [stepMs, setStepMs] = useState(DEFAULT_STEP_MS);
+  const last = total - 1;
+
+  useEffect(() => {
+    if (step < 0 || paused) return undefined;
+    if (step >= last) {
+      setPaused(true);
+      return undefined;
+    }
+    const id = setTimeout(() => setStep((s) => s + 1), stepMs);
+    return () => clearTimeout(id);
+  }, [step, paused, stepMs, last]);
+
+  useEffect(() => {
+    if (step > last) setStep(-1);
+  }, [step, last]);
+
+  const simulate = useCallback(() => {
+    if (total < 1) return;
+    setPaused(false);
+    setStep(0);
+  }, [total]);
+  const resume = useCallback(() => {
+    if (step >= last) setStep(0);
+    setPaused(false);
+  }, [step, last]);
+  const next = useCallback(() => setStep((s) => Math.min(s + 1, last)), [last]);
+  const prev = useCallback(() => setStep((s) => Math.max(s - 1, 0)), []);
+  // jump straight to a step (a click on the movie reel) and stop auto-advance there
+  const goTo = useCallback(
+    (i) => {
+      setPaused(true);
+      setStep(Math.max(0, Math.min(i, last)));
+    },
+    [last],
+  );
+  const pause = useCallback(() => setPaused(true), []);
+  const stop = useCallback(() => {
+    setStep(-1);
+    setPaused(false);
+  }, []);
+
+  return {
+    step,
+    total,
+    active: step >= 0,
+    paused,
+    stepMs,
+    setStepMs,
+    simulate,
+    resume,
+    next,
+    prev,
+    goTo,
+    pause,
+    stop,
+  };
+}
+
+// One look for "activity" on every diagram: a thick dashed accent line whose dashes run along the
+// edge. Edges not reached yet are a fainter, thinner dashed line. CSS keyframes: DiagramStepBar.css.
+const NOW_STYLE = {
+  stroke: "var(--th-status-info)",
+  strokeWidth: 5,
+  strokeDasharray: "12 8",
+  animation: "dstep-flow 0.9s linear infinite",
+};
+// Honour the OS reduced-motion setting here: the animation is an inline style, so a stylesheet could only beat it with !important.
+const nowStyle = () => (reducedMotion() ? { ...NOW_STYLE, animation: "none" } : NOW_STYLE);
+function reducedMotion() { return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
+const FUTURE_STYLE = { opacity: 0.35, strokeWidth: 2.5, strokeDasharray: "8 6" };
+
+/**
+ * React Flow edges for a walkthrough: the edge in focus is accented and animated,
+ * edges not reached yet fade to dashed. step < 0 returns the edges untouched.
+ */
+export function stepEdges(edges, step) {
+  if (step < 0) return edges;
+  return edges.map((e, i) => {
+    if (i === step) return { ...e, animated: true, style: { ...e.style, ...nowStyle() } };
+    if (i > step) return { ...e, style: { ...e.style, ...FUTURE_STYLE } };
+    return e;
+  });
+}
+
+/** Rings the nodes with these ids (the two ends of the arrow in focus) with the shared `dstep-hot` class. */
+export function markNodes(nodes, hotIds) {
+  if (!hotIds || !hotIds.length) return nodes;
+  const hot = new Set(hotIds);
+  return nodes.map((n) => (hot.has(n.id) ? { ...n, className: `${n.className ? `${n.className} ` : ""}dstep-hot` } : n));
+}
+
+/** Accents the edges at the given indexes (page-driven highlight) and leaves the rest alone. */
+export function markEdges(edges, active) {
+  const on = new Set(active);
+  return edges.map((e, i) => (on.has(i) ? { ...e, animated: true, style: { ...e.style, ...nowStyle() } } : e));
+}
+
+/** "Source → Target: label" per edge; `names` maps node id to display text. Edges are objects or [src, tgt, label] tuples. */
+export function edgeCaptions(edges, names) {
+  return edges.map((e) => {
+    const [source, target, label] = Array.isArray(e) ? e : [e.source, e.target, e.label ?? e.data?.label];
+    return `${names[source] || source} → ${names[target] || target}${label ? `: ${label}` : ""}`;
+  });
+}

@@ -1,0 +1,28 @@
+{
+  "demos": [
+    {
+      "id": "pingone-events-lab",
+      "name": "PingOne Events Lab",
+      "kind": "Demo",
+      "description": "See what PingOne delivers through a webhook subscription: the events page, delivery health (including the silent discard when a site answers 200 with a web page), and optional forwarding of each event to your Elasticsearch or OpenSearch for Kibana. Mock shows the whole path and its failures with nothing leaving the machine; Real pulls read-only. Also runs on the SE cluster so PingOne can reach the webhook (owner-approved exception, 2026-11-07).",
+      "url": "http://localhost:7802",
+      "healthPath": "/api/health",
+      "composeFile": "pingone-events-lab/docker-compose.yml",
+      "composeOverlays": [],
+      "pingProducts": [],
+      "notes": "Host-run: ./scripts/run.sh (port 7802). Mock needs no tenant and no credentials. Docker: HOST_PORT=7802 docker compose up --build -d (published on 127.0.0.1 only). Real: PINGONE_* for the read-only pull, ELASTICSEARCH_* to forward; both owner-run and UNVERIFIED against live systems. Run locally it cannot receive PingOne deliveries; the SE deployment (k8s/) does. Catalog id D124 is provisional until the owner confirms.",
+      "repo": "https://github.com/curtismu7/pingone-events-LAB",
+      "catalogId": "D124",
+      "alsoCatalogIds": [],
+      "tags": [
+        "pingone",
+        "webhook",
+        "events",
+        "elasticsearch",
+        "kibana",
+        "simulated"
+      ],
+      "where": "installed"
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+/* ── DiagramControls ─────────────────────────────────────────────────────────
+ * Shared styles for the three shared diagram UI components:
+ *   .dc-*   — DiagramControls toolbar
+ *   .dl-*   — DiagramLegend
+ *   .pfb-*  — PathFilterBar
+ *
+ * Source: extracted from ArchitectureDiagramPage.css (.arch-zoom-*, .arch-ctrl-*)
+ * and Phase266ArchitecturePage.css (.p266-filter-*). Renamed with namespaced
+ * prefixes; no functional changes.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── DiagramControls toolbar ─────────────────────────────────────────────── */
+
+.dc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+/* Zoom block */
+.dc-zoom-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-body);
+  transition: background 0.15s;
+}
+.dc-zoom-btn:hover:not(:disabled) { background: var(--surface-2); }
+.dc-zoom-btn:disabled { color: var(--muted); cursor: not-allowed; }
+
+.dc-zoom-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--th-text);
+  min-width: 2.8rem;
+  text-align: center;
+}
+
+.dc-zoom-reset {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+/* Divider between zoom and step blocks */
+.dc-divider {
+  width: 1px;
+  height: 1.2rem;
+  background: var(--th-border);
+  margin: 0 0.2rem;
+}
+
+/* Step nav block */
+.dc-step-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--th-status-info-text);
+  background: var(--th-status-info-bg);
+  border: 1px solid var(--th-status-info);
+  border-radius: 5px;
+  padding: 0.25rem 0.6rem;
+}
+.dc-step-label--paused {
+  color: var(--th-status-warning-text);
+  background: var(--th-status-warning-bg);
+  border-color: var(--th-status-warning);
+}
+
+.dc-ctrl-btn {
+  padding: 0.25rem 0.7rem;
+  border: none;
+  border-radius: var(--btn-radius);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+.dc-ctrl-btn:disabled {
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: not-allowed;
+}
+
+.dc-ctrl-btn--simulate { background: var(--accent); color: var(--on-accent); }
+.dc-ctrl-btn--simulate:hover:not(:disabled) { background: var(--accent-deep); }
+
+.dc-ctrl-btn--pause  { background: var(--box-grey); color: var(--on-box); }
+.dc-ctrl-btn--pause:hover:not(:disabled)  { background: var(--box-dark); }
+
+.dc-ctrl-btn--resume { background: var(--box-blue); color: var(--on-box); }
+.dc-ctrl-btn--resume:hover:not(:disabled) { background: var(--box-dark); }
+
+.dc-ctrl-btn--next   { background: var(--accent); color: var(--on-accent); }
+.dc-ctrl-btn--next:hover:not(:disabled)   { background: var(--accent-deep); }
+
+.dc-ctrl-btn--stop   { background: var(--surface-2); color: var(--text-body); }
+.dc-ctrl-btn--stop:hover:not(:disabled)   { background: var(--th-border); }
+
+.dc-ctrl-btn--prev   { background: var(--surface); color: var(--text-body); border: 1px solid var(--th-border); }
+.dc-ctrl-btn--prev:hover:not(:disabled)   { background: var(--surface-2); }
+
+.dc-ctrl-btn--reset  { background: var(--surface); color: var(--text-body); border: 1px solid var(--border); }
+.dc-ctrl-btn--reset:hover:not(:disabled)  { background: var(--surface-2); }
+
+/* .dc-steptime* rules live in StepTimeSelector.css (owned by that component). */
+
+/* ── DiagramLegend ────────────────────────────────────────────────────────── */
+
+.dl-legend {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.dl-legend--column {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.dl-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--th-text);
+  transition: opacity 0.2s;
+}
+
+.dl-item--dimmed {
+  opacity: 0.4;
+}
+
+.dl-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── PathFilterBar ────────────────────────────────────────────────────────── */
+
+.pfb-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pfb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 2px solid var(--th-border);
+  border-radius: var(--btn-radius);
+  background: var(--surface);
+  color: var(--text-body);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.pfb-btn:not([data-active="true"]):hover {
+  border-color: var(--muted);
+  color: var(--text-body);
+}
+
+.pfb-btn[data-active="true"] {
+  background: var(--box-grey);
+  border-color: var(--th-text);
+  color: var(--on-box);
+}
+
+.pfb-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

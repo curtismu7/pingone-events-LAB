@@ -1,0 +1,23 @@
+.pat-canvas { height: 600px; border: 1px solid var(--th-border); border-radius: var(--radius-lg); background: var(--th-bg-card); }
+.pat-node { padding: 14px 16px; min-width: 110px; max-width: 190px; text-align: center; font-size: var(--font-size-sm); font-weight: 600; color: var(--th-text); background: var(--th-status-info-bg); border: 2px solid var(--th-status-info); border-radius: var(--radius-md); }
+.pat-node--gateway { border-width: 3px; border-color: var(--th-accent); }
+.pat-node--resource { border-color: var(--th-border-strong); background: var(--th-bg-inset); }
+.pat-node--idp { border-color: var(--th-status-warning); background: var(--th-bg-inset); }
+.pat-node--on { box-shadow: 0 0 0 3px var(--th-accent); }
+.pat-handle { opacity: 0; pointer-events: none; }
+.pat-edge path { stroke: var(--th-text-muted); stroke-width: 1.6; }
+.pat-edge--cp path { stroke: var(--th-accent); }
+.pat-edge--now path { stroke-width: 3.2; }
+.pat-edge--dim { opacity: 0.3; }
+.pat-reset { margin: 4px 0 8px; }
+.pat-json { margin: 8px 0 0; padding: 10px; background: var(--th-bg-inset); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: var(--font-size-sm); overflow-x: auto; }
+@media (max-width: 480px) { .pat-canvas { height: 540px; } }
+/* React Flow ships light-only label and control colours; follow the theme tokens in dark mode too. */
+.pat-canvas .react-flow__controls { box-shadow: none; border: 1px solid var(--th-border-strong); border-radius: var(--radius-md); overflow: hidden; }
+.pat-canvas .react-flow__controls-button { background: var(--th-bg-card); color: var(--th-text); border-bottom: 1px solid var(--th-border); }
+.pat-canvas .react-flow__controls-button:hover { background: var(--th-bg-hover); }
+.pat-canvas .react-flow__controls-button svg { fill: currentColor; }
+.pat-canvas .react-flow__background { background: var(--th-bg-card); }
+.pat-elabel { position: absolute; pointer-events: none; padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid var(--th-border); background: var(--th-bg-card); color: var(--th-text); font-size: 13px; white-space: nowrap; }
+.pat-elabel--now { border-color: var(--th-status-info); font-weight: 700; }
+.pat-elabel--dim { opacity: 0.55; }

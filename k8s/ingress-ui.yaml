@@ -1,0 +1,25 @@
+# The page and the read APIs, on the app's own host (the other labs' pattern: <lab>.<demo host>). The app asks for HTTP Basic here (hosted mode),
+# with a credential separate from the webhook's, so real PingOne events (user ids, IP addresses, user agents) are never anonymous.
+# The certificate comes from k8s/certificate.yaml (a wildcard covers one label only, so this host needs its own).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pingone-events-lab-ui
+  labels: { app: pingone-events-lab }
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/upstream-vhost: "127.0.0.1:7802"
+    nginx.ingress.kubernetes.io/proxy-body-size: "16k"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
+    nginx.ingress.kubernetes.io/limit-connections: "30"
+spec:
+  ingressClassName: nginx-public
+  tls:
+    - hosts: [__UI_HOST__]
+      secretName: pingone-events-lab-tls
+  rules:
+    - host: __UI_HOST__
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: pingone-events-lab, port: { name: http } } } }

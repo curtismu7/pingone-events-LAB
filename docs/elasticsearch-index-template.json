@@ -1,0 +1,23 @@
+{
+  "index_patterns": ["pingone-events*"],
+  "priority": 200,
+  "_meta": { "description": "Index template for the PingOne Events Lab. Run it yourself; the app never creates or changes anything on your cluster." },
+  "template": {
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "eventType": { "type": "keyword" },
+        "actorId": { "type": "keyword" },
+        "actorType": { "type": "keyword" },
+        "status": { "type": "keyword" },
+        "resource": { "type": "keyword" },
+        "environmentId": { "type": "keyword" },
+        "correlationId": { "type": "keyword" },
+        "eventId": { "type": "keyword" },
+        "via": { "type": "keyword" },
+        "raw": { "type": "object", "enabled": false }
+      }
+    }
+  }
+}

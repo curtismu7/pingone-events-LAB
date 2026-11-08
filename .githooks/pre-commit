@@ -1,0 +1,6 @@
+#!/bin/sh
+# Refuse a commit that stages a secret. Installed by `npm install` (core.hooksPath).
+if command -v gitleaks >/dev/null 2>&1; then
+  exec gitleaks protect --staged --redact
+fi
+echo "pre-commit: gitleaks not installed (brew install gitleaks); CI still scans every PR." >&2

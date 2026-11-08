@@ -1,0 +1,24 @@
+# PingOne's door: ONE path on the existing demo host, added as a NEW Ingress object (no existing ingress is edited), the same pattern as the
+# id-jag-jwks-curator ingress that also serves a path on that host. Exact match, so nothing under or beside it reaches this app.
+# The app requires PingOne's credential on this path (Basic and/or a static header) and answers 401 without it.
+# Small body limit and a rate limit: a delivery is one JSON event (or a short array). No tls block: the host's certificate is already served by
+# the existing ingress for that host. The class is the one the other public labs use.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pingone-events-lab-webhook
+  labels: { app: pingone-events-lab }
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/upstream-vhost: "127.0.0.1:7802"
+    nginx.ingress.kubernetes.io/proxy-body-size: "256k"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+spec:
+  ingressClassName: nginx-public
+  rules:
+    - host: __SE_HOST__
+      http:
+        paths:
+          - { path: /webhook/pingone-events, pathType: Exact, backend: { service: { name: pingone-events-lab, port: { name: http } } } }

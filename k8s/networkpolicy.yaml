@@ -1,0 +1,24 @@
+# The namespace already uses default-deny plus an allow policy for some labs (see pingone-signin-lab); this follows that pattern.
+# Ingress: the app's port, from anywhere in the cluster (the public ingress controller lives in another namespace).
+# Egress: DNS, and HTTPS / the Elasticsearch port to the outside, because the two things this app may call are PingOne's API (443) and the
+# owner's own cluster (443 or 9200). A plain NetworkPolicy cannot name a host, so the app's own netguard is what narrows this to the
+# configured hosts. Delete the 9200 line if your cluster is on 443.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pingone-events-lab
+  labels: { app: pingone-events-lab }
+spec:
+  podSelector:
+    matchLabels: { app: pingone-events-lab }
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - ports:
+        - { protocol: TCP, port: 7802 }
+  egress:
+    - ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - ports:
+        - { protocol: TCP, port: 443 }
+        - { protocol: TCP, port: 9200 }

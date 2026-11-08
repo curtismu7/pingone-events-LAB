@@ -1,0 +1,46 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Node 26 only (owner decision 2026-10-31).
+        node: [26]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: bash scripts/check-ui-standard.sh
+      - run: npm test
+      - run: npm run build
+      - run: PORT=7802 npm run doctor
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz | tar -xz
+          sudo mv gitleaks /usr/local/bin/
+      - run: gitleaks detect --source . --redact -v
+      - name: forbidden strings (history)
+        env:
+          FORBIDDEN_STRINGS: ${{ secrets.FORBIDDEN_STRINGS }}
+        run: |
+          if [ -z "$FORBIDDEN_STRINGS" ]; then echo "FORBIDDEN_STRINGS secret missing"; exit 1; fi
+          printf '%s\n' "$FORBIDDEN_STRINGS" > /tmp/forbidden-strings.txt
+          hits=$(git log -p --all | grep -cF -f /tmp/forbidden-strings.txt || true)
+          echo "forbidden-string hits: $hits"
+          [ "$hits" = "0" ]
+      - name: No AI attribution
+        if: ${{ !cancelled() }}
+        run: bash scripts/check-no-ai-attribution.sh

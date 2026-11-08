@@ -1,0 +1,285 @@
+/*
+  standalone-ui.css: the shared UI standard for every -LAB app.
+  Canonical copy lives in AI-DEMO-Standalone/shared/. Each app vendors an identical copy
+  (check with scripts/check-ui-standard.sh). Do not edit a vendored copy; change this file.
+
+  Tokens come from the Ping brand palette.
+  Light is the default. Dark follows the system setting unless data-theme is set.
+  Montserrat for text, IBM Plex Mono for code. Emphasis is heavier weight, never italics.
+  Every unselected control has a visible border at 3:1 or more in both themes.
+*/
+
+:root {
+  color-scheme: light;
+  --bg: #fcfcfc;
+  --surface: #ffffff;
+  --surface-2: #eff0f1;
+  --text: #051727;
+  --text-body: #263746;
+  --muted: #556070;            /* 6.4:1 on surface */
+  --border: #556070;           /* 6.4:1 on surface (needs 3:1) */
+  --accent: #d20e0f;           /* white text on it: 5.5:1 */
+  --accent-deep: #aa0005;
+  --on-accent: #ffffff;
+  --accent-soft: #fde8e8;
+  --focus: #12538d;
+  --danger-text: #aa0005;
+  --accent-gradient: linear-gradient(90deg, #d20e0f 55%, #aa0005);
+  --status-ok: #1d7a43;              /* semantic green: status dots */
+  --on-accent-border: rgba(255, 255, 255, 0.35); /* thin border or spinner ring drawn on the accent */
+  --primary-edge: transparent;       /* edge of button.primary; dark themes set it so the deep red end meets 3:1 */
+  --bg-lab: var(--bg);               /* per-app page background; apps use background: var(--bg-lab), never a colour */
+  --status-warn: #8a5a00;            /* semantic amber: pending, slow, expired. 5.9:1 on --surface */
+  --status-info: #12538d;            /* semantic blue: informational. 8:1 on --surface */
+  --shadow-ink: rgba(5, 23, 39, 0.16); /* neutral ink for box shadows */
+  --box-dark: #051727;               /* diagram box fills: dark in BOTH themes, with --on-box text */
+  --box-blue: #12538d;
+  --box-grey: #3e4f60;
+  --box-red: #aa0005;
+  --on-box: #fcfcfc;
+  --font-primary: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #051727;
+    --surface: #172033;
+    --surface-2: #0f2236;
+    --text: #fcfcfc;
+    --text-body: #e0e2e4;
+    --muted: #909ea4;          /* 5.9:1 on surface */
+    --border: #909ea4;         /* 5.9:1 on surface */
+    --primary-edge: #909ea4;
+    --status-warn: #f0b34c;
+    --status-info: #8fbcff;
+    --shadow-ink: rgba(0, 0, 0, 0.5);
+    --accent-soft: #3a1213;
+    --focus: #fcfcfc;
+    --danger-text: #fca5a5;
+    --status-ok: #7fd1a0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #051727;
+  --surface: #172033;
+  --surface-2: #0f2236;
+  --text: #fcfcfc;
+  --text-body: #e0e2e4;
+  --muted: #909ea4;
+  --border: #909ea4;
+  --primary-edge: #909ea4;
+  --status-warn: #f0b34c;
+  --status-info: #8fbcff;
+  --shadow-ink: rgba(0, 0, 0, 0.5);
+  --accent-soft: #3a1213;
+  --focus: #fcfcfc;
+  --danger-text: #fca5a5;
+  --status-ok: #7fd1a0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-lab);
+  color: var(--text-body);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+h1, h2, h3 {
+  color: var(--text);
+  font-weight: 700;
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--font-mono);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Simulation or status banner, shown on every page. */
+.banner {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* Live mode: the banner edge changes colour so a live page never looks simulated. */
+.banner[data-state="live"] {
+  border-left-color: var(--focus);
+}
+
+/* Controls: every unselected control has a visible border. */
+input,
+textarea,
+select,
+button {
+  max-width: 100%;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 600;
+  min-height: 40px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+/* A disabled primary keeps its label readable: white text on the faded red stays at 4.5:1 or more. */
+button.primary:disabled {
+  opacity: 0.88;
+}
+
+/* Primary action: the Ping Red gradient, white text. Add class="primary". */
+button.primary {
+  background: var(--accent-gradient);
+  color: var(--on-accent);
+  border-color: var(--primary-edge);
+}
+
+/* Selected tab or toggle: filled accent. Set aria-selected="true" or aria-pressed="true". */
+button[aria-selected="true"],
+button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Phone width: no horizontal scroll. Layout grids drop to one column. */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ===== Diagrams (owner-approved 2026-11-03, mock: shared/device-diagram-color-mock.html) =====
+   The outline + stripe box look, shared by every lab's ReactFlow diagrams (rule 17/5).
+   Roles: dark = lab/neutral, blue = PingOne/IAM, green = person/success, red = Ping Red
+   (active/deny), amber = warning, grey = external. Layout stays in each app's stylesheet;
+   this file owns the colors. Dark stripes use saturated brand colors (--dg-*), never
+   the near-white --text/--focus. */
+:root {
+  --dg-dark: var(--text);
+  --dg-blue: var(--focus);
+  --dg-green: var(--status-ok);
+  --dg-red: var(--accent);
+  --dg-grey: var(--muted);
+  --dg-amber: var(--status-warn);
+  --dg-stripe: 10px;
+}
+:root[data-theme="dark"],
+:root:not([data-theme="light"]) {
+  --dg-dark: var(--box-blue);
+  --dg-blue: var(--status-info);
+  --dg-green: #4cc26b;
+  --dg-red: var(--accent);
+  --dg-grey: var(--muted);
+  --dg-amber: var(--status-warn);
+}
+.dg-node {
+  padding: 8px 12px 8px 12px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 2px solid var(--border);
+  border-left-width: var(--dg-stripe);
+}
+.dg-node strong { font-weight: 700; }
+.dg-node span { font-size: 12px; overflow-wrap: anywhere; color: var(--text-body); }
+.dg-node.hot { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.dg-dark  { border-left-color: var(--dg-dark); }
+.dg-blue  { border-left-color: var(--dg-blue); }
+.dg-green { border-left-color: var(--dg-green); }
+.dg-red   { border-left-color: var(--dg-red); }
+.dg-grey  { border-left-color: var(--dg-grey); }
+.dg-amber { border-left-color: var(--dg-amber); }
+.dg-now {
+  background: var(--surface-2);
+  color: var(--text);
+  border-left: 4px solid var(--accent);
+  padding: 6px 10px;
+}
+.dg-now b { color: var(--accent); }
+.edge-on .react-flow__edge-path { stroke: var(--accent); }
+.react-flow__edge.edge-dim { opacity: 0.3; }
+
+/* ===== Shelf link (owner request 2026-11-05): the "Shelf" button in every app's header =====
+   Opens the launcher (demo shelf) in a new tab. The URL comes from GET /api/shelf, which
+   reads SHELF_URL from the shared settings file written by scripts/bootstrap.sh. */
+.shelf-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+.shelf-link:hover { border-color: var(--accent); }
+.shelf-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ===== Theme picker (owner, 2026-11-06): the auto/light/dark select in every app's header =====
+   Sets data-theme on <html> only; the tokens above do the rest. */
+.shell-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.shell-theme select { min-height: 32px; padding: 4px 8px; }

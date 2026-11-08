@@ -1,0 +1,13 @@
+# TLS for the app's own host, issued by cert-manager through the ClusterIssuer the owner names (CLUSTER_ISSUER; no default).
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pingone-events-lab
+  labels: { app: pingone-events-lab }
+spec:
+  secretName: pingone-events-lab-tls
+  dnsNames:
+    - __UI_HOST__
+  issuerRef:
+    kind: ClusterIssuer
+    name: __CLUSTER_ISSUER__

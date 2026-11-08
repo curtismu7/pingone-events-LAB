@@ -1,0 +1,9 @@
+{
+  "_readme": "Copy to customer.config.json (git-ignored) to brand the lab. Only these four cast values are read; everything else is ignored. agentId, clientId and host are lowercase letters, digits and dashes; host becomes mcp.<host>.example. Overrides the chosen vertical's values.",
+  "cast": {
+    "brand": "Northwind Retail",
+    "agentId": "orders-agent",
+    "clientId": "orders-agent",
+    "host": "northwind"
+  }
+}

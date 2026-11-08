@@ -1,0 +1,29 @@
+{
+  "name": "pingone-events-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PingOne Events Lab: see what PingOne delivers through a webhook subscription, check delivery health, and forward each event to your Elasticsearch or OpenSearch for Kibana. Mock needs nothing; Real is owner-run. Standalone version of the AI-DEMO2 PingOne events page.",
+  "license": "MIT",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "start": "npm start -w server",
+    "build": "npm run build -w web",
+    "test": "npm test -w server && npm test -w web && node --test --test-force-exit scripts/*.test.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "reset": "node scripts/reset.mjs",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "talk-track": "node scripts/build-talk-track.mjs",
+    "content-pack": "node scripts/build-content-pack.mjs && node scripts/validate-content-pack.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "yaml": "^2.9.1"
+  }
+}

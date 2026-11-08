@@ -1,0 +1,39 @@
+# OrbStack:  HOST_PORT=7802 docker compose up --build -d   ->  http://127.0.0.1:7802
+# The server binds 0.0.0.0 INSIDE the container (PEV_BIND is the opt-in), but the port is published on loopback only.
+# Do not change the 127.0.0.1 below. HOST_PORT must stay 7802. Local, this app cannot receive PingOne deliveries (PingOne's cloud cannot
+# reach a laptop and nothing is exposed from it); Mock shows the whole path, and Real can still pull, read-only, and forward to your cluster.
+name: pingone-events-lab
+
+services:
+  pingone-events-lab:
+    build: .
+    ports:
+      - "127.0.0.1:${HOST_PORT:-7802}:7802"
+    environment:
+      PORT: "7802"
+      PEV_BIND: 0.0.0.0
+      PEV_DATA_DIR: /data
+      LAB_ALLOWED_HOSTS: ${LAB_ALLOWED_HOSTS:-local.ping-devops.com}
+    # Real mode settings come from the shared settings file (owner-run; the file is optional, so Mock needs nothing). STANDALONE_ENV overrides it.
+    env_file:
+      - path: ${STANDALONE_ENV:-${HOME}/Development/.env}
+        required: false
+    # OrbStack host reachability for the lab-proxy name; the app's netguard still gates what the process may call.
+    extra_hosts:
+      - "local.ping-devops.com:host-gateway"
+    volumes:
+      - pingone-events-data:/data
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:7802/api/health').then(r=>r.json()).then(j=>process.exit(j.schema==='demo-health/1'&&j.state==='ready'?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      start_period: 5s
+      start_interval: 2s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  pingone-events-data:

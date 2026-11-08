@@ -1,0 +1,225 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "event-pipeline",
+  "title": "From a PingOne event to your page, and on to Kibana",
+  "lede": "PingOne matches an activity to your subscription and POSTs it through the cluster's ingress to this app's receiver, which stores it (once) and answers at once. The page reads the store. If forwarding is on, a bounded queue sends the same event to your Elasticsearch or OpenSearch, where Kibana charts it. A read-only pull of the PingOne API checks delivery health. Mock only: nothing leaves this machine.",
+  "groups": {
+    "product": {
+      "label": "PingOne",
+      "color": "red"
+    },
+    "path": {
+      "label": "Delivery path",
+      "color": "dark"
+    },
+    "app": {
+      "label": "This app",
+      "color": "blue"
+    },
+    "sink": {
+      "label": "Forwarding (optional, your cluster)",
+      "color": "amber"
+    }
+  },
+  "nodes": [
+    {
+      "id": "p1",
+      "label": "PingOne: activity stream",
+      "group": "product",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "sub",
+      "label": "Webhook subscription (your filters)",
+      "group": "product",
+      "x": 300,
+      "y": 0
+    },
+    {
+      "id": "ingress",
+      "label": "Ingress on the SE cluster (webhook path only)",
+      "group": "path",
+      "x": 600,
+      "y": 0
+    },
+    {
+      "id": "recv",
+      "label": "Receiver: /webhook/pingone-events",
+      "group": "app",
+      "x": 900,
+      "y": 0
+    },
+    {
+      "id": "store",
+      "label": "Event store (ring buffer, idempotent)",
+      "group": "app",
+      "x": 1200,
+      "y": 160
+    },
+    {
+      "id": "page",
+      "label": "This page: table, raw JSON, delivery health",
+      "group": "app",
+      "x": 1500,
+      "y": 160
+    },
+    {
+      "id": "api",
+      "label": "PingOne API (read-only)",
+      "group": "product",
+      "x": 0,
+      "y": 160
+    },
+    {
+      "id": "pull",
+      "label": "Pull button (owner-run)",
+      "group": "app",
+      "x": 600,
+      "y": 160
+    },
+    {
+      "id": "queue",
+      "label": "Forward queue (bounded, retried)",
+      "group": "sink",
+      "x": 900,
+      "y": 320
+    },
+    {
+      "id": "es",
+      "label": "Elasticsearch / OpenSearch (yours)",
+      "group": "sink",
+      "x": 1200,
+      "y": 320
+    },
+    {
+      "id": "kib",
+      "label": "Kibana / OpenSearch Dashboards",
+      "group": "sink",
+      "x": 1500,
+      "y": 320
+    }
+  ],
+  "edges": [
+    {
+      "source": "p1",
+      "target": "sub",
+      "label": "event matches the filter"
+    },
+    {
+      "source": "sub",
+      "target": "ingress",
+      "label": "HTTPS POST + credential (HEAD first)"
+    },
+    {
+      "source": "ingress",
+      "target": "recv",
+      "label": "path unchanged"
+    },
+    {
+      "source": "recv",
+      "target": "store",
+      "label": "parse + store"
+    },
+    {
+      "source": "store",
+      "target": "page",
+      "label": "GET /api/events"
+    },
+    {
+      "source": "api",
+      "target": "pull",
+      "label": "GET subscriptions, activities"
+    },
+    {
+      "source": "pull",
+      "target": "store",
+      "label": "same parser",
+      "dashed": true
+    },
+    {
+      "source": "recv",
+      "target": "queue",
+      "label": "enqueue after the answer",
+      "dashed": true
+    },
+    {
+      "source": "queue",
+      "target": "es",
+      "label": "POST /_bulk (_id = eventId)",
+      "dashed": true
+    },
+    {
+      "source": "es",
+      "target": "kib",
+      "label": "data view pingone-events*",
+      "dashed": true
+    }
+  ],
+  "steps": [
+    {
+      "title": "PingOne notices an event",
+      "what": "Something happens in your environment: a sign-in, a session update, a flow. PingOne writes an activity and checks it against the filter on your webhook subscription.",
+      "edges": [
+        0
+      ]
+    },
+    {
+      "title": "It knocks on your door",
+      "what": "The subscription POSTs the event to the destination you set, with the Basic or header credential you gave it. Before the first POST PingOne sends a HEAD to see that the door answers; with the credential, a 200 means yes.",
+      "edges": [
+        1
+      ]
+    },
+    {
+      "title": "The ingress passes it through",
+      "what": "PingOne is in the cloud, so the receiver runs on the SE cluster where it can be reached. A dedicated ingress forwards the one webhook path to this app. The app checks PingOne's credential before it reads the body; a request without it gets 401. Nothing is exposed from a laptop.",
+      "edges": [
+        2
+      ]
+    },
+    {
+      "title": "The receiver stores it and answers",
+      "what": "One parser reads every delivery, whatever its source. A repeat of an event it already has (same event id) is ignored. The answer to PingOne goes back straight away and never waits for anything below.",
+      "edges": [
+        3
+      ]
+    },
+    {
+      "title": "The page shows it",
+      "what": "This page reads the store: newest first, filter by type, actor or status, click an event for the raw JSON.",
+      "edges": [
+        4
+      ]
+    },
+    {
+      "title": "A pull checks delivery health",
+      "what": "On a button press, read-only calls to the PingOne API fetch the subscriptions' delivery status and recent activity. The same parser turns activities into events. The pull is not the same feed as the webhook.",
+      "edges": [
+        5,
+        6
+      ]
+    },
+    {
+      "title": "Forwarding is queued, not awaited",
+      "what": "If you switched forwarding on, each new event is queued after the answer has gone. The queue is bounded: when it is full the oldest event is dropped and counted.",
+      "edges": [
+        7
+      ]
+    },
+    {
+      "title": "The queue sends a bulk request",
+      "what": "Batches go to your cluster with the event id as the document id, so a retry or a redelivery overwrites the same document. 429, 503 and a refused connection are retried a few times with backoff, then counted as failed.",
+      "edges": [
+        8
+      ]
+    },
+    {
+      "title": "Kibana reads the index",
+      "what": "A data view on pingone-events* with @timestamp as the time field shows the forwarded documents. Forwarding to a real cluster is UNVERIFIED in this lab.",
+      "edges": [
+        9
+      ]
+    }
+  ]
+}

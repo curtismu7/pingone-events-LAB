@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+.env
+.env.bak.*
+.git
+.github
+.githooks
+docs/*
+!docs/elasticsearch-index-template.json
+scripts
+k8s
+CHANGELOG.md
+Dockerfile
+LICENSE
+README.md
+content-pack.json
+docker-compose.yml

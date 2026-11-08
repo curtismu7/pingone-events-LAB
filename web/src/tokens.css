@@ -1,0 +1,38 @@
+/* Theme tokens the diagram files read. They map onto the shared stylesheet's tokens (standalone-ui.css), which owns
+   light, dark and the data-theme switch, so this file holds no colour literals and no media query. */
+:root {
+  --th-bg-page: var(--bg-lab);
+  --th-bg-card: var(--surface);
+  --th-bg-inset: var(--surface-2);
+  --th-bg-hover: var(--surface-2);
+  --th-text: var(--text);
+  --th-text-muted: var(--muted);
+  --th-border: color-mix(in srgb, var(--border) 40%, var(--surface));
+  --th-border-strong: var(--border);
+  --th-status-info: var(--status-info);
+  --th-status-info-text: var(--status-info);
+  --th-status-info-bg: color-mix(in srgb, var(--status-info) 12%, var(--surface));
+  --th-status-warning: var(--status-warn);
+  --th-status-warning-text: var(--status-warn);
+  --th-status-warning-bg: color-mix(in srgb, var(--status-warn) 14%, var(--surface));
+  --th-accent: var(--accent);
+  --th-ok: var(--status-ok);
+  --th-ok-text: var(--status-ok);
+  --th-ok-bg: color-mix(in srgb, var(--status-ok) 14%, var(--surface));
+  --th-deny: var(--accent);
+  --th-deny-text: var(--danger-text);
+  --th-deny-bg: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+  --btn-radius: var(--radius-lg);
+  --font-size-3xs: 10px;
+  --font-size-2xs: 12px;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-sans: var(--font-primary);
+}

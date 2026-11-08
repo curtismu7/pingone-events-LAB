@@ -1,0 +1,338 @@
+{
+  "schema": "demo-content-pack/1",
+  "id": "pingone-events-lab",
+  "title": "PingOne Events Lab",
+  "version": "0.1.0",
+  "demo": {
+    "id": "pingone-events-lab",
+    "name": "PingOne Events Lab",
+    "catalog": "D124",
+    "baseUrl": "http://localhost:7802",
+    "doctor": "/api/health",
+    "tags": [
+      "pingone",
+      "webhook",
+      "events",
+      "elasticsearch",
+      "kibana",
+      "delivery-health",
+      "simulated"
+    ]
+  },
+  "glossary": [
+    {
+      "id": "activity-schema",
+      "term": "Ping Activity event",
+      "definition": "The shape PingOne delivers: an id, when it was recorded, a correlation id, an action type, who did it (a user and/or a client application, each with its environment), what it touched and a result status.",
+      "aliases": [
+        "activity",
+        "webhook event"
+      ]
+    },
+    {
+      "id": "correlation-id",
+      "term": "Correlation id",
+      "definition": "One id shared by the events of a single sign-in or flow. It, not the clock, is how you join them into a story.",
+      "aliases": [
+        "trace join"
+      ]
+    },
+    {
+      "id": "delivery-health",
+      "term": "Delivery health",
+      "definition": "What PingOne records about a webhook subscription: when it last tried, when it last succeeded, and what the destination answered. A 503 means the door was shut.",
+      "aliases": [
+        "connection status"
+      ]
+    },
+    {
+      "id": "silent-discard",
+      "term": "Silent discard",
+      "definition": "A destination that serves a web page answers 200 OK to PingOne, which records success while every event is thrown away. The only tell is that the count PingOne says it delivered and the count stored do not match.",
+      "aliases": [
+        "200 with HTML"
+      ]
+    },
+    {
+      "id": "bulk-idempotent",
+      "term": "Idempotent bulk indexing",
+      "definition": "Each event is sent to Elasticsearch or OpenSearch with its event id as the document id, so a retry or a redelivery overwrites the same document instead of adding a copy.",
+      "aliases": [
+        "bulk API",
+        "_id"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "trace-context",
+      "title": "W3C Trace Context",
+      "url": "https://www.w3.org/TR/trace-context/",
+      "kind": "standard",
+      "use": "The traceparent header shown on every hop.",
+      "status": "not-read",
+      "checked": "2026-11-07"
+    }
+  ],
+  "cards": [
+    {
+      "id": "try-follow-a-signin",
+      "label": "Scenario 1: Follow one sign-in",
+      "description": "Northwind Retail's app (orders-agent) starts a flow, the password check passes, access is allowed and a session is created. Four events share ONE correlation id: that id, not the clock, is how you join them.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-follow-a-signin"
+      },
+      "terms": [
+        "correlation-id"
+      ],
+      "story": "S01"
+    },
+    {
+      "id": "try-failed-password",
+      "label": "Scenario 2: Two failed passwords, then denied",
+      "description": "Failed attempts arrive as their own events with a FAILED status. Filter the table by status FAILED to see only the trouble. (Event names in this scenario are illustrative: UNVERIFIED.)",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-failed-password"
+      },
+      "terms": [
+        "correlation-id"
+      ],
+      "story": "S02"
+    },
+    {
+      "id": "try-step-up",
+      "label": "Scenario 3: A second factor is asked for",
+      "description": "A flow that needs more than a password updates, challenges a device and updates the session. (Event names in this scenario are illustrative: UNVERIFIED.)",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-step-up"
+      },
+      "terms": [
+        "correlation-id"
+      ],
+      "story": "S03"
+    },
+    {
+      "id": "try-flow-lifecycle",
+      "label": "Scenario 4: A flow is created, updated and deleted",
+      "description": "Most of a busy feed is plumbing like this. It matters when you ask \"how many sign-ins?\": count the right event type, not the rows.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-flow-lifecycle"
+      },
+      "terms": [
+        "activity-schema"
+      ],
+      "story": "S04"
+    },
+    {
+      "id": "try-session-noise",
+      "label": "Scenario 5: Session updates dominate",
+      "description": "On a real tenant session updates were the largest group by far. A table sorted by time buries the interesting events: filter by type.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-session-noise"
+      },
+      "terms": [
+        "activity-schema"
+      ],
+      "story": "S05"
+    },
+    {
+      "id": "try-risk-event",
+      "label": "Scenario 6: A risk evaluation",
+      "description": "A risk result is an event like any other, so it can be forwarded and alerted on. (Event names in this scenario are illustrative: UNVERIFIED.)",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-risk-event"
+      },
+      "terms": [
+        "activity-schema"
+      ],
+      "story": "S06"
+    },
+    {
+      "id": "try-receiver-down",
+      "label": "Scenario 7: The receiver answers 503",
+      "description": "If this app (or the ingress in front of it) is down, PingOne records the delivery as FAILED and nothing arrives. Switch the scenario, press Send test webhook, and compare what PingOne would record with what the app stored.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-receiver-down"
+      },
+      "terms": [
+        "delivery-health"
+      ],
+      "story": "S07"
+    },
+    {
+      "id": "try-silent-discard",
+      "label": "Scenario 8: The site answers 200 with a web page",
+      "description": "The trap: a destination that serves the single-page app returns 200 OK with HTML. PingOne records SUCCESS, the events are thrown away, and nothing looks wrong. The only tell is that the number PingOne says it delivered and the number stored here do not match.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-silent-discard"
+      },
+      "terms": [
+        "silent-discard",
+        "delivery-health"
+      ],
+      "story": "S08"
+    },
+    {
+      "id": "try-cluster-throttled",
+      "label": "Scenario 9: The cluster says 429 (too many requests)",
+      "description": "Forwarding is queued and retried with backoff, then counted as failed. The webhook answer to PingOne is never affected, and the events are still on this page.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-cluster-throttled"
+      },
+      "terms": [
+        "bulk-idempotent"
+      ],
+      "story": "S09"
+    },
+    {
+      "id": "try-cluster-unavailable",
+      "label": "Scenario 10: The cluster says 503",
+      "description": "Same handling as 429: capped retries, a visible failed counter, and a bounded queue that drops the oldest event (and counts it) rather than growing without limit.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-cluster-unavailable"
+      },
+      "terms": [
+        "bulk-idempotent"
+      ],
+      "story": "S10"
+    },
+    {
+      "id": "try-cluster-unreachable",
+      "label": "Scenario 11: The cluster cannot be reached",
+      "description": "A refused connection is retried too. A down Elasticsearch must never break the receiver or the page, and this scenario proves it: keep sending events and watch the counters, not the page.",
+      "group": "try-it",
+      "action": {
+        "type": "route",
+        "href": "/#scenario-cluster-unreachable"
+      },
+      "terms": [
+        "bulk-idempotent"
+      ],
+      "story": "S11"
+    },
+    {
+      "id": "concept-delivery",
+      "label": "Delivery health",
+      "description": "Compare what PingOne says it delivered with what was stored, and see the silent discard.",
+      "group": "concept",
+      "action": {
+        "type": "route",
+        "href": "/#delivery"
+      },
+      "terms": [
+        "delivery-health",
+        "silent-discard"
+      ]
+    },
+    {
+      "id": "concept-forward",
+      "label": "Forward to Elasticsearch",
+      "description": "Send each stored event to your cluster, with a bounded queue, retries and visible counters. Unverified against a live cluster.",
+      "group": "concept",
+      "action": {
+        "type": "route",
+        "href": "/#forward"
+      },
+      "terms": [
+        "bulk-idempotent"
+      ]
+    },
+    {
+      "id": "setup-webhook",
+      "label": "Set up the webhook",
+      "description": "The destination, the credential, Ping Activity, payload limit 1; and the same thing through the Management API.",
+      "group": "setup",
+      "action": {
+        "type": "route",
+        "href": "/#setup"
+      }
+    },
+    {
+      "id": "ref-doctor",
+      "label": "Doctor and health",
+      "description": "Preflight checks and the demo-health/1 endpoint.",
+      "group": "setup",
+      "action": {
+        "type": "route",
+        "href": "/api/health"
+      }
+    }
+  ],
+  "stories": [
+    {
+      "id": "S01",
+      "title": "Follow one sign-in",
+      "say": "Northwind Retail's app (orders-agent) starts a flow, the password check passes, access is allowed and a session is created. Four events share ONE correlation id: that id, not the clock, is how you join them."
+    },
+    {
+      "id": "S02",
+      "title": "Two failed passwords, then denied",
+      "say": "Failed attempts arrive as their own events with a FAILED status. Filter the table by status FAILED to see only the trouble. (Event names in this scenario are illustrative: UNVERIFIED.)"
+    },
+    {
+      "id": "S03",
+      "title": "A second factor is asked for",
+      "say": "A flow that needs more than a password updates, challenges a device and updates the session. (Event names in this scenario are illustrative: UNVERIFIED.)"
+    },
+    {
+      "id": "S04",
+      "title": "A flow is created, updated and deleted",
+      "say": "Most of a busy feed is plumbing like this. It matters when you ask \"how many sign-ins?\": count the right event type, not the rows."
+    },
+    {
+      "id": "S05",
+      "title": "Session updates dominate",
+      "say": "On a real tenant session updates were the largest group by far. A table sorted by time buries the interesting events: filter by type."
+    },
+    {
+      "id": "S06",
+      "title": "A risk evaluation",
+      "say": "A risk result is an event like any other, so it can be forwarded and alerted on. (Event names in this scenario are illustrative: UNVERIFIED.)"
+    },
+    {
+      "id": "S07",
+      "title": "The receiver answers 503",
+      "say": "If this app (or the ingress in front of it) is down, PingOne records the delivery as FAILED and nothing arrives. Switch the scenario, press Send test webhook, and compare what PingOne would record with what the app stored."
+    },
+    {
+      "id": "S08",
+      "title": "The site answers 200 with a web page",
+      "say": "The trap: a destination that serves the single-page app returns 200 OK with HTML. PingOne records SUCCESS, the events are thrown away, and nothing looks wrong. The only tell is that the number PingOne says it delivered and the number stored here do not match."
+    },
+    {
+      "id": "S09",
+      "title": "The cluster says 429 (too many requests)",
+      "say": "Forwarding is queued and retried with backoff, then counted as failed. The webhook answer to PingOne is never affected, and the events are still on this page."
+    },
+    {
+      "id": "S10",
+      "title": "The cluster says 503",
+      "say": "Same handling as 429: capped retries, a visible failed counter, and a bounded queue that drops the oldest event (and counts it) rather than growing without limit."
+    },
+    {
+      "id": "S11",
+      "title": "The cluster cannot be reached",
+      "say": "A refused connection is retried too. A down Elasticsearch must never break the receiver or the page, and this scenario proves it: keep sending events and watch the counters, not the page."
+    }
+  ]
+}
