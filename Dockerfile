@@ -1,7 +1,8 @@
 # Build the web app, then run the API server, which also serves web/dist. ONE image for the local standalone and for the SE deployment
 # (owner-approved exception 2026-11-07): the SE manifests in k8s/ run this same image in hosted mode. No MODE and no hosted flag are baked in: Real if it is
 # configured, else Mock, and the toggle switches at runtime. Build for the cluster with:
-#   docker --context orbstack buildx build --platform linux/amd64 -t ghcr.io/<owner>/pingone-events-lab:<immutable-tag> --load .
+# NOTE: the SE cluster nodes are arm64 (Graviton). Check: kubectl --context <ctx> get nodes -L kubernetes.io/arch
+#   docker --context orbstack buildx build --platform linux/arm64 -t ghcr.io/<owner>/pingone-events-lab:<immutable-tag> --load .
 FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

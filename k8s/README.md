@@ -13,8 +13,9 @@ Owner-approved exception, 2026-11-07: this app also runs on the SE cluster so Pi
 | `deploy.sh` | renders `__TOKEN__` placeholders with sed; `--dry-run` prints and fails on any leftover token; a real run needs `OWNER_APPROVED=1`, then verifies by content |
 
 ## The image
+The SE cluster's nodes are **arm64 (Graviton)**, so build `linux/arm64` (an amd64 image fails to start with `no match for platform in manifest`). Check before you build: `kubectl --context <ctx> get nodes -L kubernetes.io/arch`.
 ```sh
-docker --context orbstack buildx build --platform linux/amd64 \
+docker --context orbstack buildx build --platform linux/arm64 \
   -t ghcr.io/curtismu7/pingone-events-lab:<immutable-tag> --load .
 docker --context orbstack push ghcr.io/curtismu7/pingone-events-lab:<immutable-tag>   # owner step
 ```
