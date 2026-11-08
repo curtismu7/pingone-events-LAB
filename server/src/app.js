@@ -32,6 +32,7 @@ import { PingOneError, createPingOneClient, failedDeliveries } from './pingoneCl
 import { buildPullHops, buildReceiveHops, newTrace } from './trace.js';
 import { getNetguard } from './netguard.js';
 import { createWorkspaces, workspaceFrom } from './workspaces.js';
+import { shelfInfo } from './shelfLink.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_WEB_DIST = process.env.WEB_DIST || path.resolve(HERE, '../../web/dist');
@@ -431,6 +432,8 @@ export function createApp({
     res.json({ reset: 'ok', workspace: ws, realEventsKept: true, realEvents: store.count() });
   }));
   api.get('/runs', withWorkspace((ws, _req, res) => res.json(workspaces.runs(ws))));
+  // The header "Shelf" button. On the api router BEFORE the 404 catch-all, and not tied to a web build.
+  api.get('/shelf', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(shelfInfo(env)); });
   api.use((_req, res) => res.status(404).json({ error: 'not_found' }));
   app.use('/api', api);
   // Errors become short JSON. Express's default handler would send an HTML stack trace with absolute file paths.

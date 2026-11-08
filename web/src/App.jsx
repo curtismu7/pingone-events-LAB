@@ -6,6 +6,7 @@ import Setup from "./components/Setup";
 import DiagramTab from "./components/DiagramTab";
 import TalkTrack from "./components/TalkTrack";
 import { getJson, resetWorkspace, setMode } from "./api";
+import ShelfLink from "./components/ShelfLink";
 
 export const TABS = [
   { id: "events", label: "Events" },
@@ -92,6 +93,7 @@ export default function App() {
           {TABS.map((t) => <a key={t.id} id={`tab-${t.id}`} href={`#${t.id}`} aria-current={tab === t.id ? "page" : undefined} onClick={(e) => { e.preventDefault(); select(t.id); }}>{t.label}</a>)}
         </nav>
         <span className="shell-right">
+          <ShelfLink />
           {info && (
             <span className="seg" role="group" aria-label="Data source" data-testid="mode-toggle">
               <button type="button" aria-pressed={!real} data-testid="mode-mock" onClick={() => switchTo("mock")}>Mock</button>
