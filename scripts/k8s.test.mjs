@@ -146,7 +146,10 @@ test('the UI Ingress is a second object on its OWN host with its own certificate
 test('the NetworkPolicy lets only the public ingress controller in, DNS to CoreDNS out, and HTTPS / 9200 out EXCLUDING private and metadata ranges; its comment describes what was read', () => {
   const n = one('networkpolicy');
   assert.deepEqual(n.spec.policyTypes.sort(), ['Egress', 'Ingress']);
+  assert.equal(n.spec.ingress.length, 1, 'exactly ONE ingress rule: nothing else may reach the pod');
+  assert.equal(n.spec.ingress[0].ports.length, 1);
   assert.deepEqual(n.spec.ingress[0].from, [{ namespaceSelector: { matchLabels: { 'kubernetes.io/metadata.name': 'ingress-nginx-public' } }, podSelector: { matchLabels: { 'app.kubernetes.io/name': 'ingress-nginx' } } }]);
+  assert.equal(n.spec.egress.length, 2, 'exactly two egress rules: DNS, and HTTPS / 9200');
   const [dns, out] = n.spec.egress;
   assert.deepEqual(dns.to, [{ namespaceSelector: { matchLabels: { 'kubernetes.io/metadata.name': 'kube-system' } }, podSelector: { matchLabels: { 'k8s-app': 'kube-dns' } } }]);
   assert.deepEqual(dns.ports.map((p) => `${p.protocol}/${p.port}`).sort(), ['TCP/53', 'UDP/53']);

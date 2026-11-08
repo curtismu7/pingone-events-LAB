@@ -130,6 +130,17 @@ test('hosted: the toggle is per workspace and can NEVER change how the receiver 
   }, { env: HOSTED });
 });
 
+test('hosted: a viewer flipping the DEFAULT workspace (the one PingOne\'s header-less requests use) to Mock cannot turn the receiver into a 409 for PingOne', async () => {
+  await withServer(async (url) => {
+    assert.equal((await post(url, '/api/mode', { source: 'mock' }, UI)).status, 200, 'no X-Workspace header: the default workspace');
+    assert.equal((await (await fetch(`${url}/api/info`, { headers: UI })).json()).mode, 'mock');
+    const ok = await hook(url, [activity(1)], WH);
+    assert.deepEqual([ok.status, (await ok.json()).stored], [200, 1], 'PingOne is still answered as a Real receiver and stored in the Real store');
+    assert.equal((await fetch(`${url}/webhook/pingone-events`, { method: 'HEAD', headers: WH })).status, 200);
+    assert.equal((await (await fetch(`${url}/api/events`, { headers: { ...UI, 'x-workspace': 'other-viewer' } })).json()).count, 1, 'another viewer, still in Real, sees the event');
+  }, { env: HOSTED });
+});
+
 test('hosted: the rate limit is per client address as the ingress reports it (X-Forwarded-For, one hop)', async () => {
   await withServer(async (url) => {
     const code = async (ip, n) => (await hook(url, [activity(n)], { ...WH, 'x-forwarded-for': ip })).status;
