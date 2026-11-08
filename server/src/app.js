@@ -116,7 +116,9 @@ export function createApp({
   applyGuard();
 
   // ---- the sinks -------------------------------------------------------------------------------------------------------------------
-  let realSink = null; let realForwarding = false;
+  // Forwarding starts OFF. The one exception is a HOSTED deployment whose owner set FORWARD_ON_START=1 in its settings (the Secret) and has the
+  // cluster configured: a restarted pod then keeps forwarding instead of silently going quiet. Local never starts it on its own.
+  let realSink = null; let realForwarding = hosted && env.FORWARD_ON_START === '1' && Boolean(sinkFrom(env));
   const realFetch = (...a) => (fetchImpl || globalThis.fetch)(...a);
   const getRealSink = () => {
     const cfg = sinkFrom(env);
