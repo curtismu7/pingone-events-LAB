@@ -126,7 +126,8 @@ test('hosted: the rate limit is per client address as the ingress reports it (X-
 test('credentials are compared in constant time: hashed to equal length, then timingSafeEqual', () => {
   assert.equal(safeEqual('same', 'same'), true); assert.equal(safeEqual('same', 'sameX'), false); assert.equal(safeEqual('', 'x'), false); assert.equal(safeEqual('a'.repeat(5000), 'a'.repeat(5000)), true);
   const src = fs.readFileSync(new URL('../src/auth.js', import.meta.url), 'utf8');
-  assert.match(src, /timingSafeEqual/); assert.match(src, /createHash\('sha256'\)/);
+  assert.match(src, /export const safeEqual = \(a, b\) => timingSafeEqual\(digest\(a\), digest\(b\)\);/, 'safeEqual IS timingSafeEqual over two digests');
+  assert.match(src, /const digest = \(v\) => createHash\('sha256'\)/);
   assert.ok(!/(password|cred\.user|auth\.header\.value)\s*[!=]==/.test(src), 'no ordinary string comparison on a secret');
   const req = (h) => ({ headers: h });
   assert.deepEqual(basicCredentials(req({ authorization: basic('u', 'p:with:colons').authorization })), { user: 'u', password: 'p:with:colons' });
