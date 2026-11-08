@@ -139,6 +139,17 @@ describe("events", () => {
     expect(screen.queryByTestId("event-detail")).toBeNull();
   });
 
+  it("clicking anywhere on a table row opens its detail right under that row, and clicking the row again closes it", async () => {
+    await ready();
+    const rows = screen.getAllByTestId("event-row");
+    await userEvent.click(within(rows[0]).getAllByRole("cell")[2]);
+    const detail = await screen.findByTestId("event-detail");
+    expect(rows[0].nextElementSibling).toContainElement(detail);
+    expect(screen.getAllByTestId("event-row")).toHaveLength(2);
+    await userEvent.click(within(rows[0]).getAllByRole("cell")[0]);
+    expect(screen.queryByTestId("event-detail")).toBeNull();
+  });
+
   it("hostile text in an event is rendered as text, never as markup", async () => {
     state.events = [ev(1, { eventType: "A.B", status: "<img src=x onerror=alert(1)>", actorId: "<script>alert(1)</script>", raw: { note: "<b>bold</b>‮evil" } })];
     await ready();
