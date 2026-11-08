@@ -12,6 +12,15 @@ const HOSTED = { PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'pingone', WEBHOOK_BASIC_P
 const hook = (url, body, headers = {}, p = '/webhook/pingone-events') => fetch(`${url}${p}`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
 const WH = basic('pingone', HW); const UI = basic('viewer', HU);
 
+test('hosted: forwarding starts OFF, and starts ON only when the owner set FORWARD_ON_START=1 with the cluster configured; local never starts it', async () => {
+  const ES = { ELASTICSEARCH_URL: 'https://cluster.example:9200', ELASTICSEARCH_API_KEY: 'test-api-key-value' };
+  const forwarding = async (url) => (await (await fetch(`${url}/api/sink`, { headers: UI })).json()).forwarding;
+  await withServer(async (url) => assert.equal(await forwarding(url), false, 'default: off'), { env: { ...HOSTED, ...ES } });
+  await withServer(async (url) => assert.equal(await forwarding(url), true, 'owner opted in'), { env: { ...HOSTED, ...ES, FORWARD_ON_START: '1' } });
+  await withServer(async (url) => assert.equal(await forwarding(url), false, 'opted in but no cluster configured: stays off'), { env: { ...HOSTED, FORWARD_ON_START: '1' } });
+  await withServer(async (url) => assert.equal((await (await fetch(`${url}/api/sink`)).json()).forwarding, false, 'local ignores it'), { env: { ...ES, FORWARD_ON_START: '1', MODE: 'real', PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_CLIENT_ID: ENV_ID, PINGONE_CLIENT_SECRET: 'a-test-secret-value', PINGONE_REGION: 'eu' } });
+});
+
 test('hosted FAILS CLOSED: without the webhook credential or the page credential the app is not created, and the message names the setting, not a value', () => {
   for (const [env, re] of [[{ PEV_HOSTED: '1' }, /WEBHOOK_BASIC_USER[\s\S]*UI_BASIC_USER/], [{ PEV_HOSTED: '1', UI_BASIC_USER: 'v', UI_BASIC_PASSWORD: HU }, /webhook receiver needs a credential/], [{ PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'p', WEBHOOK_BASIC_PASSWORD: HW }, /page and the read APIs need their own credential/], [{ PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'p', WEBHOOK_BASIC_PASSWORD: 'short', UI_BASIC_USER: 'v', UI_BASIC_PASSWORD: HU }, /webhook receiver needs a credential/]]) {
     assert.throws(() => createApp({ health: createHealth({ intervalMs: 3_600_000 }), env }), (e) => { assert.match(e.message, re); assert.ok(!e.message.includes(HW) && !e.message.includes(HU)); return true; });
