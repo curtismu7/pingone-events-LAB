@@ -7,7 +7,7 @@
     "id": "pingone-events-lab",
     "name": "PingOne Events Lab",
     "catalog": "D124",
-    "baseUrl": "http://localhost:7802",
+    "baseUrl": "http://localhost:7803",
     "doctor": "/api/health",
     "tags": [
       "pingone",

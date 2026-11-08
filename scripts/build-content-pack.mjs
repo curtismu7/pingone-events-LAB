@@ -22,7 +22,7 @@ export function buildPack() {
     id: 'pingone-events-lab',
     title: 'PingOne Events Lab',
     version,
-    demo: { id: 'pingone-events-lab', name: 'PingOne Events Lab', catalog: 'D124', baseUrl: 'http://localhost:7802', doctor: '/api/health', tags: ['pingone', 'webhook', 'events', 'elasticsearch', 'kibana', 'delivery-health', 'simulated'] },
+    demo: { id: 'pingone-events-lab', name: 'PingOne Events Lab', catalog: 'D124', baseUrl: 'http://localhost:7803', doctor: '/api/health', tags: ['pingone', 'webhook', 'events', 'elasticsearch', 'kibana', 'delivery-health', 'simulated'] },
     glossary: [
       { id: 'activity-schema', term: 'Ping Activity event', definition: 'The shape PingOne delivers: an id, when it was recorded, a correlation id, an action type, who did it (a user and/or a client application, each with its environment), what it touched and a result status.', aliases: ['activity', 'webhook event'] },
       { id: 'correlation-id', term: 'Correlation id', definition: 'One id shared by the events of a single sign-in or flow. It, not the clock, is how you join them into a story.', aliases: ['trace join'] },

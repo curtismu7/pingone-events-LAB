@@ -16,7 +16,7 @@ test('the files the standalone rules ask for are present', () => {
 test('the shelf entry is valid and portable: relative composeFile, loopback url, health path', () => {
   const e = JSON.parse(read('docs/shelf-entry.json')).demos[0];
   assert.equal(e.id, 'pingone-events-lab'); assert.equal(e.kind, 'Demo'); assert.equal(e.healthPath, '/api/health');
-  assert.match(e.url, /^http:\/\/localhost:7802$/);
+  assert.match(e.url, /^http:\/\/localhost:7803$/);
   assert.ok(!path.isAbsolute(e.composeFile), 'composeFile must be relative or a placeholder');
   assert.ok(!/\/Users\//.test(JSON.stringify(e)), 'no absolute home path');
   assert.deepEqual(e.pingProducts, []);
@@ -43,7 +43,7 @@ test('CI: Node 26 only, GitHub-hosted, the UI-standard check, gitleaks, forbidde
   const ci = read('.github/workflows/ci.yml');
   assert.match(ci, /node: \[26\]/); assert.match(ci, /runs-on: ubuntu-latest/); assert.ok(!/self-hosted/.test(ci));
   assert.match(ci, /actions\/checkout@v5/); assert.match(ci, /actions\/setup-node@v5/);
-  assert.match(ci, /check-ui-standard\.sh/); assert.match(ci, /node scripts\/conformance\.mjs \. --new --tier=Demo/); assert.match(ci, /npm audit --omit=dev/); assert.match(ci, /gitleaks/); assert.match(ci, /FORBIDDEN_STRINGS/); assert.match(ci, /check-no-ai-attribution\.sh/); assert.match(ci, /PORT=7802 npm run doctor/);
+  assert.match(ci, /check-ui-standard\.sh/); assert.match(ci, /node scripts\/conformance\.mjs \. --new --tier=Demo/); assert.match(ci, /npm audit --omit=dev/); assert.match(ci, /gitleaks/); assert.match(ci, /FORBIDDEN_STRINGS/); assert.match(ci, /check-no-ai-attribution\.sh/); assert.match(ci, /PORT=7803 npm run doctor/);
 });
 
 test('no shipped text names a real customer, company, tenant, public host or cluster (only the family\'s local alias local.ping-devops.com may appear)', () => {

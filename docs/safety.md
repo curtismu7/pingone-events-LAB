@@ -3,7 +3,7 @@
 What this app does and does not do, in the order a reviewer asks.
 
 ## Local (the Docker standalone and `./scripts/run.sh`)
-- Binds loopback only (`127.0.0.1:7802`). Docker publishes on `127.0.0.1` only. Host check on every request; writes must be same-origin.
+- Binds loopback only (`127.0.0.1:7803`). Docker publishes on `127.0.0.1` only. Host check on every request; writes must be same-origin.
 - **Mock makes no outbound call.** The runtime netguard refuses every non-loopback socket, DNS lookup, fetch and UDP send, and Mock mode empties its allow-list, so even a coding mistake cannot leave the machine. A test asserts zero attempts across the Mock flows, including the pretend-cluster failure scenarios.
 - **Real contacts only named hosts**, and only when you press a button or turn a switch: the PingOne API hosts for your region (read-only pull: one token request, then two GETs) and the one Elasticsearch / OpenSearch address you configure (forwarding, off until you turn it on and confirm). Redirects are refused, every call has a timeout and a size cap, and the cluster address must be `https` (plain `http` only on loopback) and may not be a link-local or metadata address.
 - Secrets are write-only: read from the settings file, used inside the client that needs them, never returned by any API and never logged; every error message is scrubbed of every configured secret before it leaves.

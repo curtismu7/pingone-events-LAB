@@ -1,6 +1,6 @@
-# OrbStack:  HOST_PORT=7802 docker compose up --build -d   ->  http://127.0.0.1:7802
+# OrbStack:  HOST_PORT=7803 docker compose up --build -d   ->  http://127.0.0.1:7803
 # The server binds 0.0.0.0 INSIDE the container (PEV_BIND is the opt-in), but the port is published on loopback only.
-# Do not change the 127.0.0.1 below. HOST_PORT must stay 7802. Local, this app cannot receive PingOne deliveries (PingOne's cloud cannot
+# Do not change the 127.0.0.1 below. HOST_PORT must stay 7803 (the host port; 7802 is only the port inside the container). Local, this app cannot receive PingOne deliveries (PingOne's cloud cannot
 # reach a laptop and nothing is exposed from it); Mock shows the whole path, and Real can still pull, read-only, and forward to your cluster.
 name: pingone-events-lab
 
@@ -8,7 +8,7 @@ services:
   pingone-events-lab:
     build: .
     ports:
-      - "127.0.0.1:${HOST_PORT:-7802}:7802"
+      - "127.0.0.1:${HOST_PORT:-7803}:7802"
     environment:
       PORT: "7802"
       PEV_BIND: 0.0.0.0

@@ -22,12 +22,12 @@ const here = (p) => fs.readFileSync(new URL(`../${p}`, import.meta.url), 'utf8')
 
 test('docker-compose.yml publishes only on 127.0.0.1', () => {
   const ports = publishedPorts(here('docker-compose.yml'));
-  assert.deepEqual(ports, ['127.0.0.1:${HOST_PORT:-7802}:7802']);
+  assert.deepEqual(ports, ['127.0.0.1:${HOST_PORT:-7803}:7802']);
   for (const p of ports) assert.match(p, /^127\.0\.0\.1:/, `${p} must start with 127.0.0.1:`);
 });
 
 test('the parser flags an unbound or wildcard publish', () => {
-  for (const bad of ['- "7802:7802"', '- "0.0.0.0:7802:7802"', '- 7802', '- "::1:7802:7802"']) {
+  for (const bad of ['- "7803:7802"', '- "0.0.0.0:7803:7802"', '- 7803', '- "::1:7803:7802"']) {
     const ports = publishedPorts(`services:\n  a:\n    ports:\n      ${bad}\n`);
     assert.equal(ports.length, 1);
     assert.doesNotMatch(ports[0], /^127\.0\.0\.1:/);

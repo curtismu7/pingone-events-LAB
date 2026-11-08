@@ -1,6 +1,6 @@
 # PingOne Events Lab
 
-**Tier: Demo.** Standalone app (local Docker on OrbStack, port 7802) that shows what PingOne tells you about itself through a webhook subscription, how to tell whether the webhook is really working, and how to forward each event to your own Elasticsearch or OpenSearch so Kibana can chart it.
+**Tier: Demo.** Standalone app (local Docker on OrbStack, port 7803) that shows what PingOne tells you about itself through a webhook subscription, how to tell whether the webhook is really working, and how to forward each event to your own Elasticsearch or OpenSearch so Kibana can chart it.
 
 It is the standalone version of the PingOne events page in AI-DEMO2 (read-only source; nothing is imported). Scaffold copied from observability-LAB (shell, safety, netguard, workspaces, story and diagram plumbing); the events, receiver, delivery health, sink and hosting are new. Catalog id D124 is provisional until the owner confirms it.
 
@@ -14,8 +14,9 @@ It is the standalone version of the PingOne events page in AI-DEMO2 (read-only s
 
 ## Run it
 ```sh
-./scripts/run.sh                      # host: install, build, preflight, start  ->  http://localhost:7802/
-HOST_PORT=7802 docker compose up --build -d     # OrbStack: published on 127.0.0.1 only
+./scripts/run.sh                      # host: install, build, preflight, start  ->  http://localhost:7803/
+HOST_PORT=7803 docker compose up --build -d     # OrbStack: published on 127.0.0.1 only
+# The host port is 7803. Inside the container the app still listens on 7802, which the SE manifests use, so nothing there changes.
 npm test                              # server (node --test), web (vitest), scripts (node --test)
 npm run doctor                        # preflight; the same checks GET /api/health reports from
 # The tests need no web build and no settings file: they run on a fresh clone (npm ci && npm test). With no web build the server still
@@ -50,4 +51,4 @@ Events are written to one JSON file within 50 ms of arriving (`PERSIST_DELAY_MS`
 - The page loads Montserrat from Google Fonts like the sibling labs; that is the browser, not the app process, and it can be removed for a strictly offline page.
 
 ## Rules it follows
-Loopback bind, same-origin writes, netguard (zero outbound in Mock; named hosts only in Real), one port (7802), `GET /api/health` = `demo-health/1`, rule 19 Mock/Real toggle (`POST /api/mode {source}`, `409` when Real is not configured), workspace id for Mock state, W3C `traceparent` on hops, diagram loaded by name from diagram-studio data, labelled facts, no real tenant ids, hostnames or secrets in the repo. Details in [CLAUDE.md](CLAUDE.md).
+Loopback bind, same-origin writes, netguard (zero outbound in Mock; named hosts only in Real), one port (7803), `GET /api/health` = `demo-health/1`, rule 19 Mock/Real toggle (`POST /api/mode {source}`, `409` when Real is not configured), workspace id for Mock state, W3C `traceparent` on hops, diagram loaded by name from diagram-studio data, labelled facts, no real tenant ids, hostnames or secrets in the repo. Details in [CLAUDE.md](CLAUDE.md).

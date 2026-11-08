@@ -12,7 +12,7 @@ Done in this repo: everything below the line "Owner steps". Nothing here has bee
 
 ## Shelf, proxy and repo (as for every new lab)
 6. **Repo**: create `curtismu7/pingone-events-LAB` (owner approval each time), set the `FORBIDDEN_STRINGS` secret, push this history. `ci.yml` is present (Node 26, GitHub-hosted, gitleaks, forbidden-strings, no-AI-attribution).
-7. **demo-shelf-LAB `data/demos.json`**: add the entry in `docs/shelf-entry.json` (id `pingone-events-lab`, port 7802, catalog `D124` provisional: the owner picks the final id), then `npm run ports` / `npm run doctor` there. The port 7802 is claimed on the board.
+7. **demo-shelf-LAB `data/demos.json`**: add the entry in `docs/shelf-entry.json` (id `pingone-events-lab`, port 7803, catalog `D124` provisional: the owner picks the final id), then `npm run ports` / `npm run doctor` there. The port 7803 is claimed on the board.
 8. **lab-proxy** (`AI-DEMO-Standalone/shared/lab-proxy`): one entry location, one cookie-map pair and the lab's compose network, with a request-time `proxy_pass` (`set $x container:port`), then `shared/lab-proxy/check-config.sh`. Labs accept the name through `LAB_ALLOWED_HOSTS` (compose default `local.ping-devops.com`).
 9. **Meta repo**: after the GitHub repo exists, add the submodule `standalone/pingone-events-LAB` and pin it.
 10. **Learning Hub**: `content-pack.json` validates (`npm run content-pack`); the hub reads it from the repo once registered.

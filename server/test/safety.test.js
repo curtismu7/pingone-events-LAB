@@ -14,11 +14,13 @@ test('bind: loopback only unless PEV_BIND is set', () => {
   assert.equal(assertBindAllowed('0.0.0.0', { PEV_BIND: '0.0.0.0' }), '0.0.0.0');
 });
 
-test('ports: 7802 only, never a reserved or another app\'s one', () => {
-  assert.equal(portProblem(7802), null);
-  for (const p of [5000, 7720, 7800, 7801, 7803, 7710, 7700, 5200, 8080, 5173, 3900, 4000, 4400, 4510, 4600, 4601, 4840, 18080, 19080, 19090, 4771, 4700]) assert.ok(portProblem(p), String(p));
+test('ports: the host port 7803 and the container-internal 7802 only, never a reserved or another app\'s one', () => {
+  assert.equal(portProblem(7803), null);
+  assert.equal(portProblem(7802), null, 'the port inside the container (Docker and the SE deployment set it explicitly)');
+  for (const p of [5000, 7720, 7800, 7801, 7804, 7710, 7700, 5200, 8080, 5173, 3900, 4000, 4400, 4510, 4600, 4601, 4840, 18080, 19080, 19090, 4771, 4700]) assert.ok(portProblem(p), String(p));
   assert.ok(portProblem(NaN));
-  assert.equal(resolvePort({}), 7802);
+  assert.equal(resolvePort({}), 7803);
+  assert.equal(resolvePort({ PORT: '7803' }), 7803);
   assert.equal(resolvePort({ PORT: '7802' }), 7802);
   assert.throws(() => resolvePort({ PORT: '7800' })); // observability-lab owns 7800
   assert.throws(() => resolvePort({ PORT: '7801' })); // privilege-logging-LAB owns 7801

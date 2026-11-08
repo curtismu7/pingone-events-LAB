@@ -3,7 +3,8 @@
 //  2. Host header must be a loopback name (DNS-rebinding defence).
 //  3. A write must be same-origin: a cross-origin Origin, or a cross-site Sec-Fetch-Site, is refused.
 //  4. Every host in any shipped text is reserved (.invalid / .example / apex of example.com|net|org).
-//  5. The one port is 7802 (allocated 2026-11-07) and never one of the forbidden ones.
+//  5. The one HOST port is 7803 (allocated 2026-11-08: 7802 went to aggregate-entitlement-lab). 7802 stays only as the CONTAINER-internal port
+//     (Docker and the SE deployment set it explicitly), so neither has to change. Never one of the forbidden ones.
 //  6. Every key-looking string is an obviously fake sk-MOCK- value.
 
 export function isLoopbackHost(host) {
@@ -18,14 +19,14 @@ export function assertBindAllowed(host, env = process.env) {
   throw new Error(`refusing to bind ${host}: loopback only. Set PEV_BIND to opt in.`);
 }
 
-export const PORT_MIN = 7802;
-export const PORT_MAX = 7802;
-export const DEFAULT_PORT = 7802;
+export const PORT_MIN = 7802; // container-internal
+export const PORT_MAX = 7803; // host
+export const DEFAULT_PORT = 7803;
 const FORBIDDEN_PORTS = new Set([8080, 5173, 3900, 4000, 4400, 4510, 4600, 4601, 4840, 18080, 19080, 19090]);
 export function portProblem(port) {
   if (!Number.isInteger(port)) return 'PORT is not an integer';
   if (FORBIDDEN_PORTS.has(port)) return `port ${port} is reserved for something else`;
-  if (port < PORT_MIN || port > PORT_MAX) return `port ${port} is not this app's allocated port ${PORT_MIN}`;
+  if (port < PORT_MIN || port > PORT_MAX) return `port ${port} is not this app's host port ${PORT_MAX} or its container port ${PORT_MIN}`;
   return null;
 }
 export function resolvePort(env = process.env) {

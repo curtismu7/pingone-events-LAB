@@ -23,7 +23,7 @@ jobs:
       - run: npm audit --omit=dev
       - run: npm test
       - run: npm run build
-      - run: PORT=7802 npm run doctor
+      - run: PORT=7803 npm run doctor
   secrets:
     runs-on: ubuntu-latest
     steps:
