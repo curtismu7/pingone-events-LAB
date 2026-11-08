@@ -22,6 +22,6 @@ export function buildDiagram(cast, name = DIAGRAM_NAMES[0]) {
     title: d.title,
     intro: d.lede,
     nodes: d.nodes.map((n) => ({ id: n.id, label: n.label, kind: n.group, x: n.x, y: n.y })),
-    steps: d.steps.map((s) => { const e = d.edges[s.edges[0]]; return { from: e.source, to: e.target, label: s.title, say: s.what }; }),
+    steps: d.steps.map((s) => { const e = d.edges[s.edges[0]]; return { from: e.source, to: e.target, label: s.title, edge: e.label || s.title, say: s.what }; }),
   };
 }

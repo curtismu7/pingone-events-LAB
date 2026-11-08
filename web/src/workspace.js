@@ -1,15 +1,14 @@
-// Rule 13: each browser tab gets its own workspace id, kept in sessionStorage, and sends it as X-Workspace on every API call
-// that touches server state. Storage can be blocked, so a failure falls back to a per-load id.
-const KEY = "pev.workspace";
+// Rule 13: a workspace id keeps one visitor's Mock state apart from another's, and every API call that touches server state sends it as X-Workspace.
+// The browser uses the `default` workspace (the one `npm run reset` and POST /api/reset act on without a header), unless the page is opened with
+// ?workspace=<id> to get a separate, isolated Mock state (letters, digits and dashes, up to 40).
+const OK = /^[a-z0-9-]{1,40}$/;
 let memo = null;
 
 export function workspaceId() {
   if (memo) return memo;
-  try { const saved = window.sessionStorage.getItem(KEY); if (saved && /^[a-z0-9-]{1,40}$/.test(saved)) return (memo = saved); } catch { /* blocked */ }
-  const bytes = new Uint8Array(8);
-  (window.crypto || { getRandomValues: (a) => a.map(() => Math.floor(Math.random() * 256)) }).getRandomValues(bytes);
-  memo = `w-${[...bytes].map((b) => b.toString(16).padStart(2, "0")).join("")}`;
-  try { window.sessionStorage.setItem(KEY, memo); } catch { /* blocked */ }
+  let q = null;
+  try { q = new URLSearchParams(window.location.search).get("workspace"); } catch { /* no location */ }
+  memo = q && OK.test(q) ? q : "default";
   return memo;
 }
 

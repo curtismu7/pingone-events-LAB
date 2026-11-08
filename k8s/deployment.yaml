@@ -42,8 +42,11 @@ spec:
             # line of defence; hosted mode never relies on Host to decide who is calling.
             - { name: LAB_ALLOWED_HOSTS, value: __UI_HOST__ }
             - { name: WEBHOOK_ALLOWED_HOSTS, value: __SE_HOST__ }
-            # Every PingOne delivery arrives from a few addresses: allow more per minute than the local default of 120.
+            # Every PingOne delivery arrives from a few addresses: allow more per minute than the local default of 120. Unauthenticated requests have their
+            # own small per-address allowance, so a flood cannot use this one up.
             - { name: PEV_WEBHOOK_RPM, value: "600" }
+            # Trust exactly one proxy hop for the client address (the ingress appends it to X-Forwarded-For; the app uses only the right-most entry).
+            - { name: PEV_TRUST_PROXY_HOPS, value: "1" }
           # The credentials and the PingOne / Elasticsearch settings. The Secret must exist (the pod fails to start without it); see k8s/secret.example.yaml.
           envFrom:
             - secretRef: { name: pingone-events-lab }

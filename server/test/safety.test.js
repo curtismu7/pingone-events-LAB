@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isLoopbackHost, assertBindAllowed, bindHost, portProblem, resolvePort, isReservedHost, scanHosts, scanKeys, cleanText, hostCheck, sameOriginWrites, isBlockedTargetHost, webhookHosts, WEBHOOK_PATHS } from '../src/safety.js';
+import { isLoopbackHost, assertBindAllowed, bindHost, portProblem, resolvePort, isReservedHost, scanHosts, scanKeys, cleanText, hostCheck, sameOriginWrites, sameOriginWritesFor, isBlockedTargetHost, webhookHosts, WEBHOOK_PATHS } from '../src/safety.js';
 
 test('loopback names', () => {
   for (const h of ['localhost', '127.0.0.1', '127.9.9.9', '::1', '[::1]']) assert.ok(isLoopbackHost(h), h);
@@ -66,12 +66,19 @@ test('sameOriginWrites: GET passes, cross-origin and cross-site writes refused',
   assert.ok(run(sameOriginWrites, { method: 'POST', headers: { ...h, 'sec-fetch-site': 'same-origin' } }).next);
 });
 
-test('a public origin is never same-origin: there is no hosted build, so only the request Host (or the proxy\'s X-Forwarded-Host) counts', () => {
-  const post = (origin, extra = {}) => run(sameOriginWrites, { method: 'POST', headers: { host: '127.0.0.1:7800', origin, ...extra } });
+test('same-origin: the Origin must match the request\'s REAL Host or a host the admin listed in LAB_ALLOWED_HOSTS; X-Forwarded-Host is never trusted', () => {
+  const env = { LAB_ALLOWED_HOSTS: 'local.example,ui.example' };
+  const post = (origin, extra = {}, host = '127.0.0.1:7802') => run(sameOriginWritesFor(env), { method: 'POST', headers: { host, origin, ...extra } });
   assert.equal(post('https://app.demo.example').status, 403);
   assert.equal(post('not a url').status, 403);
-  assert.ok(post('http://127.0.0.1:7800').next);
-  assert.ok(post('https://local.ping-devops.com:8443', { 'x-forwarded-host': 'local.ping-devops.com:8443' }).next, 'behind the shared lab-proxy');
+  assert.ok(post('http://127.0.0.1:7802').next, 'Origin equals the real Host');
+  assert.equal(post('https://evil.example', { 'x-forwarded-host': 'evil.example' }).status, 403, 'a client-supplied X-Forwarded-Host cannot make a foreign origin same-origin');
+  assert.equal(post('https://evil.example', { 'x-forwarded-host': '127.0.0.1:7802' }).status, 403);
+  assert.ok(post('https://ui.example').next, 'the page\'s own public host (listed by the admin) is trusted even when an ingress rewrote Host');
+  assert.ok(post('https://local.example:8443').next, 'with a port: the host NAME is what is listed');
+  assert.equal(post('http://ui.example').status, 403, 'plain http for a non-loopback listed host is not trusted');
+  assert.equal(post('https://ui.example.evil.example').status, 403);
+  assert.equal(post('https://ui.example', {}, 'ui.example').status !== 403, true);
 });
 
 test('review fixes: octets above 255 are not loopback; 4840 is reserved; control and bidi characters are stripped', async () => {

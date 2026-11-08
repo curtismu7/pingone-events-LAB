@@ -92,13 +92,17 @@ export function realHosts(env = process.env) {
 // Owner-approved exception, 2026-11-07: this one app also runs on the SE cluster so PingOne's cloud can reach the webhook. The SAME image
 // runs there with PEV_HOSTED=1. Hosted mode fails CLOSED: it will not start without a webhook credential and a separate UI credential,
 // because real PingOne events carry user ids, IP addresses and user agents. Locally (loopback, not hosted) nothing here is required.
-export const hostedFrom = (env = process.env) => env.PEV_HOSTED === '1';
+// Hosted unless the value is explicitly falsy. ANY other value ("1", "true", "yes", " 1 ", "TRUE", ...) means hosted: a typo must fail
+// CLOSED (credentials required), never open.
+const FALSY = new Set(['', '0', 'false', 'no', 'off']);
+export const hostedFrom = (env = process.env) => !FALSY.has(String(env.PEV_HOSTED ?? '').trim().toLowerCase());
 const MIN_SECRET = 12;
 const HEADER_NAME = /^[A-Za-z][A-Za-z0-9-]{1,63}$/;
 // A value that still says REPLACE-ME is the template's placeholder, not a credential: refusing it makes an unedited Secret fail closed.
 const placeholder = (v) => /REPLACE-ME/i.test(v);
 const user = (v) => typeof v === 'string' && /^[A-Za-z0-9._-]{1,64}$/.test(v) && !placeholder(v);
-const secret = (v) => typeof v === 'string' && v.length >= MIN_SECRET && v.length <= 300 && !/[\r\n\u0000]/.test(v) && !placeholder(v);
+// At least 12 characters AFTER trimming (a whitespace-only value is not a secret), no line breaks or NULs, no placeholder.
+const secret = (v) => typeof v === 'string' && v.trim().length >= MIN_SECRET && v.length <= 300 && !/[\r\n\u0000]/.test(v) && !placeholder(v);
 
 // What PingOne must send with a delivery: HTTP Basic, a static custom header, or either. { basic, header } or null when neither is set.
 export function webhookAuthFrom(env = process.env) {
@@ -111,13 +115,34 @@ export function webhookAuthFrom(env = process.env) {
 export function uiAuthFrom(env = process.env) {
   return user(env.UI_BASIC_USER) && secret(env.UI_BASIC_PASSWORD) ? { user: env.UI_BASIC_USER, password: env.UI_BASIC_PASSWORD } : null;
 }
+// The settings a hosted deployment reads. A placeholder in any of them, or a half-set or invalid PingOne / Elasticsearch group, stops it.
+const HOSTED_KEYS = ['WEBHOOK_BASIC_USER', 'WEBHOOK_BASIC_PASSWORD', 'WEBHOOK_HEADER_NAME', 'WEBHOOK_HEADER_VALUE', 'UI_BASIC_USER', 'UI_BASIC_PASSWORD', 'PINGONE_ENVIRONMENT_ID', 'PINGONE_REGION', 'PINGONE_CLIENT_ID', 'PINGONE_CLIENT_SECRET', 'ELASTICSEARCH_URL', 'ELASTICSEARCH_API_KEY', 'ELASTICSEARCH_USERNAME', 'ELASTICSEARCH_PASSWORD', 'ELASTICSEARCH_INDEX', 'WEBHOOK_ALLOWED_HOSTS', 'LAB_ALLOWED_HOSTS'];
+
 // Why a hosted deployment must not start, or [] when it can. Names the setting, never a value.
 export function hostedProblems(env = process.env) {
   if (!hostedFrom(env)) return [];
   const p = [];
-  if (!webhookAuthFrom(env)) p.push(`the webhook receiver needs a credential from PingOne: set WEBHOOK_BASIC_USER and WEBHOOK_BASIC_PASSWORD (at least ${MIN_SECRET} characters), or WEBHOOK_HEADER_NAME and WEBHOOK_HEADER_VALUE`);
-  if (!uiAuthFrom(env)) p.push(`the page and the read APIs need their own credential: set UI_BASIC_USER and UI_BASIC_PASSWORD (at least ${MIN_SECRET} characters)`);
+  const wh = webhookAuthFrom(env); const ui = uiAuthFrom(env);
+  if (!wh) p.push(`the webhook receiver needs a credential from PingOne: set WEBHOOK_BASIC_USER and WEBHOOK_BASIC_PASSWORD (at least ${MIN_SECRET} characters), or WEBHOOK_HEADER_NAME and WEBHOOK_HEADER_VALUE`);
+  if (!ui) p.push(`the page and the read APIs need their own credential: set UI_BASIC_USER and UI_BASIC_PASSWORD (at least ${MIN_SECRET} characters)`);
+  if (wh && ui) {
+    const whSecrets = [wh.basic?.password, wh.header?.value].filter(Boolean);
+    if (whSecrets.some((v) => v === ui.password) || (wh.basic && wh.basic.user === ui.user && wh.basic.password === ui.password)) p.push('the webhook credential and the page credential must be different (the same secret is set for both)');
+  }
+  const placeholders = HOSTED_KEYS.filter((k) => typeof env[k] === 'string' && placeholder(env[k]));
+  if (placeholders.length) p.push(`${placeholders.join(', ')} still hold${placeholders.length === 1 ? 's' : ''} the template placeholder REPLACE-ME: set a real value or delete the key`);
+  const anyPull = ['PINGONE_ENVIRONMENT_ID', 'PINGONE_CLIENT_ID', 'PINGONE_CLIENT_SECRET'].some((k) => env[k]);
+  if (anyPull && !pingoneFrom(env)) p.push(pullProblemFrom(env).replace(' Mock keeps working.', '') + ' Set all four or delete them');
+  if (env.ELASTICSEARCH_URL && !sinkFrom(env)) p.push('ELASTICSEARCH_URL / ELASTICSEARCH_INDEX / credentials are set but not valid (see sink-config); fix or delete them');
   return p;
+}
+
+// How many proxy hops to trust for the client address (X-Forwarded-For). Hosted default 1: the ingress appends the address it saw as the
+// RIGHT-MOST entry, and that is the only entry trusted; anything a client put to the left of it is ignored. Locally 0 (no proxy).
+export function trustProxyHops(env = process.env) {
+  const raw = env.PEV_TRUST_PROXY_HOPS;
+  if (raw === undefined || raw === '') return hostedFrom(env) ? 1 : 0;
+  return /^[0-3]$/.test(raw) ? Number(raw) : (hostedFrom(env) ? 1 : 0);
 }
 
 // Every secret value in the settings, for scrubbing error text that might echo one (a cluster, a proxy or PingOne repeating a header back).

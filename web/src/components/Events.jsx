@@ -117,12 +117,12 @@ export default function Events({ story, info, dataSignal, requestedId, onSelect,
               <tbody>
                 {events.map((e) => (
                   <tr key={e.eventId} data-testid="event-row" className={selected === e.eventId ? "row--on" : ""}>
-                    <td className="nowrap">{clock(e.timestamp)}</td>
-                    <td><button type="button" className="linkish" aria-pressed={selected === e.eventId} aria-label={`Open ${visible(e.eventType)}`} onClick={() => setSelected(selected === e.eventId ? null : e.eventId)}>{visible(e.eventType)}</button></td>
-                    <td><code>{e.actorType ? `${e.actorType} ` : ""}{shortId(e.actorId)}</code></td>
-                    <td>{e.status ? <span className={statusClass(e.status)}>{visible(e.status)}</span> : ""}</td>
-                    <td><code>{shortId(e.resource)}</code></td>
-                    <td><code>{shortId(e.correlationId)}</code></td>
+                    <td className="nowrap" data-label="Time (UTC)">{clock(e.timestamp)}</td>
+                    <td data-label="Event"><button type="button" className="linkish" aria-pressed={selected === e.eventId} aria-label={`Open ${visible(e.eventType)}`} onClick={() => setSelected(selected === e.eventId ? null : e.eventId)}>{visible(e.eventType)}</button></td>
+                    <td data-label="Actor"><code>{e.actorType ? `${e.actorType} ` : ""}{shortId(e.actorId)}</code></td>
+                    <td data-label="Status">{e.status ? <span className={statusClass(e.status)}>{visible(e.status)}</span> : ""}</td>
+                    <td data-label="Resource"><code>{shortId(e.resource)}</code></td>
+                    <td data-label="Correlation"><code>{shortId(e.correlationId)}</code></td>
                   </tr>
                 ))}
               </tbody>

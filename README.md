@@ -18,14 +18,28 @@ It is the standalone version of the PingOne events page in AI-DEMO2 (read-only s
 HOST_PORT=7802 docker compose up --build -d     # OrbStack: published on 127.0.0.1 only
 npm test                              # server (node --test), web (vitest), scripts (node --test)
 npm run doctor                        # preflight; the same checks GET /api/health reports from
-npm run reset                         # Reset a running app (Mock state; Real events are kept)
+npm run reset                         # Reset a running app's default workspace (the one the browser uses); Real events are kept
 ```
 Mock needs nothing. Real settings come from the shared settings file (`~/Development/.env`; `STANDALONE_ENV` overrides): `PINGONE_ENVIRONMENT_ID`, `PINGONE_REGION`, `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET` for the pull, `ELASTICSEARCH_URL` plus `ELASTICSEARCH_API_KEY` (or user and password) for forwarding. Real is on by default only when configured, and the header toggle switches back and forth at runtime.
 
 Run locally, the app cannot receive PingOne deliveries (PingOne's cloud cannot reach a laptop). Use Mock to see the whole path, the pull to read delivery health, or the SE deployment for the real thing.
 
 ## SE deployment (hosted)
-Manifests, a Secret template and `k8s/deploy.sh` are in [k8s/](k8s/); see [k8s/README.md](k8s/README.md). Build only: nothing here deploys itself, pushes an image or touches a cluster. Hosted mode fails closed: no webhook credential or no page credential means the process does not start. PingOne's destination is `https://<se-host>/webhook/pingone-events` with Basic authentication; the page is on its own host behind a separate password.
+Manifests, a Secret template and `k8s/deploy.sh` are in [k8s/](k8s/); see [k8s/README.md](k8s/README.md). Build only: nothing here deploys itself, pushes an image or touches a cluster. PingOne's destination is `https://<se-host>/webhook/pingone-events` with Basic authentication; the page is on its own host behind a separate password.
+
+Hosted behaves differently from local in ways that matter:
+- **Fails closed.** Any `PEV_HOSTED` value except an explicit falsy one (`""`, `0`, `false`, `no`, `off`) means hosted. Hosted will not start without a webhook credential and a different page credential (each at least 12 characters, not whitespace, not a `REPLACE-ME` placeholder), or with a placeholder in any setting, or with half-set or invalid PingOne / Elasticsearch settings.
+- **The receiver is always Real.** A caller holding PingOne's credential is answered as a Real receiver and stored in the Real store whatever any viewer does with the toggle; the toggle there is per workspace and only changes what that viewer sees.
+- **Authenticate first.** The credential is checked before the body is read. A request that fails goes into a small per-address bucket of its own (`PEV_WEBHOOK_UNAUTH_RPM`, default 30 a minute); a valid one has a separate, larger bucket (`PEV_WEBHOOK_RPM`, 600 on SE). A flood of bad requests cannot use up PingOne's allowance. `429` carries `Retry-After`.
+- **The client address comes from one trusted proxy hop** (`PEV_TRUST_PROXY_HOPS`, 1 when hosted): the right-most `X-Forwarded-For` entry, the one the ingress appended. A client cannot choose its own rate-limit bucket by writing to the left of it. **The SE ingress must set or append `X-Forwarded-For`** (nginx-ingress does by default); if it ever stops, every caller looks like the ingress and shares one bucket (it fails safe, not open).
+
+## Durability, honestly
+Events are written to one JSON file within 50 ms of arriving (`PERSIST_DELAY_MS`), atomically, and flushed on SIGTERM. A **SIGKILL (or power loss) inside that 50 ms window loses the newest events**: a write per event would cost far more, and PingOne retries only what it was not given a 2xx for. If a write fails it is **counted and shown** (Delivery tab, `/api/info`, `/api/events` notice), the receiver's answer says `durability: "failing"`, and `GET /api/health` reports `state: "broken"` (the health contract allows no extra fields) until a write succeeds. A corrupt events file is moved aside to `events.json.corrupt-<time>` (never overwritten) and the notice clears after the first good write.
+
+## Known items
+- **Dev-only advisories.** `npm audit` reports 3 (1 moderate, 2 critical) in the test toolchain: vitest, tinypool and @vitest/mocker. The fix is a major vitest upgrade (`--force`), which is out of scope here. `npm audit --omit=dev` (production dependencies) reports 0 and runs in CI.
+- **The pipeline diagram is this app's own `diagram-studio/1` file** (`server/diagrams/event-pipeline.json`), loaded by name and checked with a copy of the studio's validator (and its `wire.js`, re-copied from curtismu7/diagram-studio-LAB main on 2026-11-07). It is not fetched from the shared diagram-studio at run time: a standalone app must work offline, and the studio has no run-time API for other apps. Rule 17 asks for data, not a hand-built node list; that is what this is.
+- **Event ordering** is by arrival time, never by the sender's `recordedAt` (which is shown, and replaced by the arrival time if it is outside 2000 to one day ahead).
 
 ## Honest scope
 - **UNVERIFIED**: forwarding to a real Elasticsearch / OpenSearch, the Kibana how-to, the PingOne Management API subscription shape, and the SE deployment have not been run against live systems by the people who built this (agents never use live systems). Mock proves the shape of what would be sent and how failures are handled, nothing more.

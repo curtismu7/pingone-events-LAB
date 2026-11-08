@@ -48,6 +48,7 @@ export default function Delivery({ story, info, dataSignal, onChanged }) {
 
   if (real) {
     const last = pull || d.pull?.last;
+    const pr = d.receiver.persistence || { durability: "memory", writeFailures: 0 };
     return (
       <div className="delivery">
         <section className="panel" aria-label="Receiver" data-testid="receiver">
@@ -56,6 +57,7 @@ export default function Delivery({ story, info, dataSignal, onChanged }) {
             <div className="kv__row"><dt>Paths</dt><dd><code>{d.receiver.paths.join("  ")}</code></dd></div>
             <div className="kv__row"><dt>Stored here</dt><dd data-testid="stored">{d.receiver.stored} of {d.receiver.capacity} (a repeat of an event is ignored: {d.receiver.duplicates} so far)</dd></div>
             <div className="kv__row"><dt>Webhook credential</dt><dd>{d.receiver.credentialConfigured ? "configured (PingOne must send it)" : "not set"}</dd></div>
+            <div className="kv__row"><dt>Saved to disk</dt><dd data-testid="durability"><span className={pr.durability === "failing" ? "chip chip--danger" : pr.durability === "ok" ? "chip chip--ok" : "chip"}>{pr.durability}</span> {pr.durability === "failing" ? `${pr.writeFailures} failed write(s). ${visible(pr.lastError || "")}` : pr.durability === "memory" ? "in memory only: events are lost on a restart" : "the newest events are written within a moment"}{pr.notice ? ` ${visible(pr.notice)}` : ""}</dd></div>
             <div className="kv__row"><dt>Public host</dt><dd>{d.receiver.publicHostConfigured ? "configured" : "not set: only this machine can reach the receiver"}</dd></div>
           </dl>
         </section>
@@ -87,6 +89,7 @@ export default function Delivery({ story, info, dataSignal, onChanged }) {
   }
 
   const c = d.counters; const sc = d.scenarios[d.scenario];
+  const fact = story?.facts?.find((f) => f.id === sc.fact);
   const mismatch = c.acked > c.stored + c.duplicates;
   return (
     <div className="delivery">
@@ -96,7 +99,7 @@ export default function Delivery({ story, info, dataSignal, onChanged }) {
         <div className="seg" role="group" aria-label="Delivery scenario">
           {ORDER.map((k) => <button key={k} type="button" aria-pressed={d.scenario === k} data-testid={`door-${k}`} onClick={() => choose(k)}>{d.scenarios[k].title}</button>)}
         </div>
-        <p className="lesson" data-testid="door-explain"><strong>PingOne sees:</strong> {sc.pingoneSees}. <strong>The app:</strong> {sc.appDoes}. {sc.explain}</p>
+        <p className="lesson" data-testid="door-explain"><strong>PingOne sees:</strong> {sc.pingoneSees}. <strong>The app:</strong> {sc.appDoes}. {sc.explain}{sc.fact && fact ? <> <span className={fact.status === "measured" ? "tag tag--ok" : fact.status === "UNVERIFIED" ? "tag tag--warn" : "tag"} data-testid="door-fact">{fact.status}</span></> : null}</p>
         <button type="button" data-testid="send-test" onClick={sendTest}>Send test webhook</button>
         {sent && (
           <p data-testid="sent">Answer: <span className={sent.status === 200 && sent.body ? "chip chip--ok" : "chip chip--danger"} data-testid="sent-status">HTTP {sent.status}</span> <span className="muted">{sent.type.split(";")[0] || "no content type"}</span></p>

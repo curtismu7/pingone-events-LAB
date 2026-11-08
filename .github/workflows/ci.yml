@@ -18,6 +18,9 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: npm ci
       - run: bash scripts/check-ui-standard.sh
+      # The family conformance gate (vendored copy of demo-kit-base's script) and the production-dependency audit.
+      - run: node scripts/conformance.mjs . --new --tier=Demo
+      - run: npm audit --omit=dev
       - run: npm test
       - run: npm run build
       - run: PORT=7802 npm run doctor

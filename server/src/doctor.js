@@ -5,7 +5,7 @@ import { netguardSelfTest } from './netguard.js';
 import { DEFAULT_CAST, VERTICALS, unfilled } from './cast.js';
 import { buildStory, rawStory } from './story.js';
 import { hostedFrom, hostedProblems, modeFrom, pingoneFrom, pullProblemFrom, realAvailableFrom, sinkFrom, sinkProblemFrom, webhookFrom } from './config.js';
-import { DIAGRAM_NAMES, buildDiagram } from './diagramData.js';
+import { DIAGRAM_NAMES, buildDiagram, rawDiagram } from './diagramData.js';
 import { MOCK_SCENARIO_IDS, handWritten, scenarioActivities } from './mockEvents.js';
 import { parseDelivery } from './eventParser.js';
 import { SINK_SCENARIOS } from './mockSink.js';
@@ -39,7 +39,7 @@ export async function runChecks({ env = process.env, cast = DEFAULT_CAST } = {})
   const add = (id, level, detail) => checks.push({ id, level, detail });
 
   const major = Number(process.versions.node.split('.')[0]);
-  add('node', major >= 20 ? 'pass' : 'fail', `v${process.versions.node} (need >= 20)`);
+  add('node', major >= 26 ? 'pass' : 'fail', `v${process.versions.node} (need >= 26: the version this app is built and tested on)`);
 
   try { add('mode', 'pass', `mode=${modeFrom(env)}${realAvailableFrom(env) ? ' (Real configured)' : ' (Mock only)'}`); }
   catch (e) { add('mode', 'fail', e.message); }
@@ -65,7 +65,7 @@ export async function runChecks({ env = process.env, cast = DEFAULT_CAST } = {})
   add('scenarios', raw.scenarios.length >= 8 && !wrong.length && !generators.length ? 'pass' : 'fail', wrong.length || generators.length ? `scenarios that do not teach what they claim: ${[...wrong, ...generators].join(', ')}` : `${raw.scenarios.length} scenarios each behave as their lesson says (${MOCK_SCENARIO_IDS.length} event generators parse)`);
   const facts = raw.facts.filter((f) => !['measured', 'inferred', 'UNVERIFIED'].includes(f.status));
   add('facts-labelled', facts.length ? 'fail' : 'pass', facts.length ? 'a fact has no status label' : 'every fact is labelled measured, inferred or UNVERIFIED');
-  const text = JSON.stringify([raw]);
+  const text = JSON.stringify([raw, DIAGRAM_NAMES.map((n) => rawDiagram(n))]); // the story AND every diagram file: a {{token}} in either must be defined
   const holes = unfilled(text, DEFAULT_CAST);
   add('story-tokens', holes.length ? 'fail' : 'pass', holes.length ? `unfilled {{tokens}}: ${[...new Set(holes)].join(', ')}` : 'every {{cast}} token is filled');
   const badVert = Object.entries(VERTICALS).filter(([, v]) => unfilled(text, v).length).map(([k]) => k);

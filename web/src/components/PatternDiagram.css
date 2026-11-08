@@ -11,13 +11,13 @@
 .pat-edge--dim { opacity: 0.3; }
 .pat-reset { margin: 4px 0 8px; }
 .pat-json { margin: 8px 0 0; padding: 10px; background: var(--th-bg-inset); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: var(--font-size-sm); overflow-x: auto; }
-@media (max-width: 480px) { .pat-canvas { height: 540px; } }
+@media (max-width: 600px) { .pat-canvas { height: min(72vh, 560px); } }
 /* React Flow ships light-only label and control colours; follow the theme tokens in dark mode too. */
 .pat-canvas .react-flow__controls { box-shadow: none; border: 1px solid var(--th-border-strong); border-radius: var(--radius-md); overflow: hidden; }
 .pat-canvas .react-flow__controls-button { background: var(--th-bg-card); color: var(--th-text); border-bottom: 1px solid var(--th-border); }
 .pat-canvas .react-flow__controls-button:hover { background: var(--th-bg-hover); }
 .pat-canvas .react-flow__controls-button svg { fill: currentColor; }
 .pat-canvas .react-flow__background { background: var(--th-bg-card); }
-.pat-elabel { position: absolute; pointer-events: none; padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid var(--th-border); background: var(--th-bg-card); color: var(--th-text); font-size: 13px; white-space: nowrap; }
+.pat-elabel { position: absolute; pointer-events: none; padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid var(--th-border); background: var(--th-bg-card); color: var(--th-text); font-size: 13px; white-space: normal; text-align: center; max-width: 140px; line-height: 1.25; z-index: 5; }
 .pat-elabel--now { border-color: var(--th-status-info); font-weight: 700; }
 .pat-elabel--dim { opacity: 0.55; }

@@ -12,7 +12,7 @@ test('a real Ping Activity delivery parses to the shared event shape, environmen
   assert.deepEqual({ ...r.event, raw: undefined }, {
     eventId: '00000000-0000-4000-8000-000000000001', eventType: 'FLOW.CREATED', actorId: CLIENT_ID, actorType: 'CLIENT', status: 'SIGN_ON_REQUIRED',
     resource: '00000000-0000-4000-8000-0000000000aa', environmentId: ENV_ID, correlationId: '00000000-0000-4000-8000-0000000000ff',
-    timestamp: '2026-11-07T12:00:01.000Z', via: 'webhook', schema: 'activity', raw: undefined,
+    timestamp: '2026-11-07T12:00:01.000Z', receivedAt: OPT.receivedAt, via: 'webhook', schema: 'activity', raw: undefined,
   });
   assert.deepEqual(r.event.raw._embedded, {}, '_embedded is empty on real deliveries and is not where the environment comes from');
 });

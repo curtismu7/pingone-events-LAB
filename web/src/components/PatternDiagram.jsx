@@ -6,7 +6,9 @@ import { useDiagramStepper } from "../hooks/useDiagramStepper";
 import { REFIT_EVENT, useFitOnResize } from "../hooks/useFitOnResize";
 import "./PatternDiagram.css";
 
-const FIT = { padding: 0.08 };
+// minZoom keeps labels readable on a narrow screen: the diagram is then wider than the canvas and is panned, not shrunk to dots.
+const FIT = { padding: 0.1, minZoom: 0.6 };
+const narrowNow = () => typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(max-width: 600px)").matches;
 const HANDLES = [["t", Position.Top], ["b", Position.Bottom], ["l", Position.Left], ["r", Position.Right]];
 
 function Box({ data }) {
@@ -58,6 +60,12 @@ function Canvas({ pattern, positions, onMove, stepper }) {
   const ref = useRef(null);
   useFitOnResize(ref, FIT);
   const active = stepper.step >= 0 ? pattern.steps[stepper.step] : null;
+  const [narrow, setNarrow] = useState(narrowNow);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return undefined;
+    const mq = window.matchMedia("(max-width: 600px)"); const on = () => setNarrow(mq.matches);
+    mq.addEventListener?.("change", on); return () => mq.removeEventListener?.("change", on);
+  }, []);
   const nodes = pattern.nodes.map((n) => ({
     id: n.id, type: "box", position: positions[n.id], draggable: true,
     data: { label: n.label, kind: n.kind, on: !!active && (active.from === n.id || active.to === n.id) },
@@ -72,7 +80,7 @@ function Canvas({ pattern, positions, onMove, stepper }) {
     const seen = stepper.step >= 0 && i <= stepper.step;
     return {
       id: `e${i}`, source: s.from, target: s.to, sourceHandle: `s-${a}`, targetHandle: `t-${b}`, type: "label",
-      animated: now, data: { text: `${i + 1}. ${s.label}`, dy: offs[i], now, dim: stepper.step >= 0 && !seen },
+      animated: now, data: { text: narrow ? `${i + 1}` : `${i + 1}. ${s.edge ?? s.label}`, dy: offs[i], now, dim: stepper.step >= 0 && !seen },
       className: `pat-edge${cp ? " pat-edge--cp" : ""}${now ? " pat-edge--now" : ""}${stepper.step >= 0 && !seen ? " pat-edge--dim" : ""}`,
       markerEnd: { type: MarkerType.ArrowClosed },
     };

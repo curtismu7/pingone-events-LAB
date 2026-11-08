@@ -176,7 +176,7 @@
     {
       "id": "try-silent-discard",
       "label": "Scenario 8: The site answers 200 with a web page",
-      "description": "The trap: a destination that serves the single-page app returns 200 OK with HTML. PingOne records SUCCESS, the events are thrown away, and nothing looks wrong. The only tell is that the number PingOne says it delivered and the number stored here do not match.",
+      "description": "The trap: a destination that serves the single-page app returns 200 OK with HTML. PingOne records SUCCESS, the events are thrown away, and nothing looks wrong. The only tell is that the number PingOne says it delivered and the number stored here do not match. (Inferred, not re-tested: see the facts on the Setup tab.)",
       "group": "try-it",
       "action": {
         "type": "route",
@@ -317,7 +317,7 @@
     {
       "id": "S08",
       "title": "The site answers 200 with a web page",
-      "say": "The trap: a destination that serves the single-page app returns 200 OK with HTML. PingOne records SUCCESS, the events are thrown away, and nothing looks wrong. The only tell is that the number PingOne says it delivered and the number stored here do not match."
+      "say": "The trap: a destination that serves the single-page app returns 200 OK with HTML. PingOne records SUCCESS, the events are thrown away, and nothing looks wrong. The only tell is that the number PingOne says it delivered and the number stored here do not match. (Inferred, not re-tested: see the facts on the Setup tab.)"
     },
     {
       "id": "S09",

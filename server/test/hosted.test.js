@@ -99,19 +99,34 @@ test('hosted never trusts the Host header to decide who is calling (an ingress m
   }, { env: HOSTED });
 });
 
-test('hosted: Mock mode — PingOne\'s credential gets 409, but this page\'s own test button (same-origin + the page credential) works and stays in the Mock store', async () => {
+test('hosted: the toggle is per workspace and can NEVER change how the receiver treats PingOne; the page\'s own test button works only in a workspace that chose Mock', async () => {
   await withServer(async (url) => {
-    assert.equal((await post(url, '/api/mode', { source: 'mock' }, UI)).status, 200);
+    const A = { ...UI, 'x-workspace': 'viewer-a' }; const B = { ...UI, 'x-workspace': 'viewer-b' };
+    const modeOf = async (h) => (await (await fetch(`${url}/api/info`, { headers: h })).json()).mode;
+    assert.equal((await post(url, '/api/mode', { source: 'mock' }, A)).status, 200);
+    assert.deepEqual([await modeOf(A), await modeOf(B)], ['mock', 'real'], 'one viewer\'s choice is theirs alone');
+    // PingOne, after the flip: still answered as a Real receiver, still stored in the Real store.
     const pingone = await hook(url, [activity(1)], WH);
-    assert.deepEqual([pingone.status, (await pingone.json()).error], [409, 'mock_mode']);
-    const page = await hook(url, [activity(2)], { ...UI, origin: url, 'x-lab-hops': '1' });
+    assert.deepEqual([pingone.status, (await pingone.json()).stored], [200, 1]);
+    assert.equal((await fetch(`${url}/webhook/pingone-events`, { method: 'HEAD', headers: WH })).status, 200, 'the connection test still passes');
+    assert.equal((await hook(url, [activity(2)], WH, '/webhook/pingone')).status, 200);
+    assert.equal((await (await fetch(`${url}/api/events`, { headers: B })).json()).count, 2, 'viewer B sees the real events');
+    assert.equal((await (await fetch(`${url}/api/events`, { headers: A })).json()).count, 0, 'viewer A, in Mock, sees only the Mock store');
+    // The page\'s own test button: same-origin + page credential + THIS workspace in Mock.
+    const page = await hook(url, [activity(3)], { ...A, origin: url, 'x-lab-hops': '1' });
     const j = await page.json();
     assert.deepEqual([page.status, j.stored, j.hops.length >= 2], [200, 1, true]);
-    assert.equal((await hook(url, [activity(3)], UI)).status, 401, 'the page credential without a same-origin Origin (a script, not the page) is refused');
-    assert.equal((await (await fetch(`${url}/api/events`, { headers: UI })).json()).count, 1);
-    assert.equal((await post(url, '/api/mode', { source: 'real' }, UI)).status, 200);
-    assert.equal((await (await fetch(`${url}/api/events`, { headers: UI })).json()).count, 0, 'Real store untouched by the page\'s test button');
-    assert.equal((await hook(url, [activity(4)], { ...UI, origin: url })).status, 401, 'in Real the page credential does not unlock the webhook');
+    assert.equal((await (await fetch(`${url}/api/events`, { headers: A })).json()).count, 1);
+    assert.equal((await (await fetch(`${url}/api/events`, { headers: B })).json()).count, 2, 'the Real store is untouched by the test button');
+    assert.equal((await hook(url, [activity(4)], { ...A, origin: url }, '/webhook/pingone-events')).status, 200);
+    assert.equal((await hook(url, [activity(5)], A)).status, 401, 'the page credential without a same-origin Origin (a script, not the page) is refused');
+    assert.equal((await hook(url, [activity(6)], { ...B, origin: url })).status, 401, 'in a Real workspace the page credential does not unlock the webhook');
+    assert.equal((await post(url, '/api/mode', { source: 'real' }, A)).status, 200);
+    assert.equal((await hook(url, [activity(7)], { ...A, origin: url })).status, 401, 'back in Real the test button is closed again');
+    assert.equal((await post(url, '/api/mode', { source: 'mock' }, A)).status, 200);
+    // And even if EVERY viewer is in Mock, PingOne is unaffected.
+    await post(url, '/api/mode', { source: 'mock' }, B);
+    assert.deepEqual([(await hook(url, [activity(8)], WH)).status, (await fetch(`${url}/webhook/pingone-events`, { method: 'HEAD', headers: WH })).status], [200, 200]);
   }, { env: HOSTED });
 });
 

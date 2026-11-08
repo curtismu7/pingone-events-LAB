@@ -1,5 +1,5 @@
 {
-  "$comment": "Copied from the Learning Hub research (AI-DEMO2 planning/standalone-research/content-pack/content-pack.schema.json, 2026-10-20). This copy is the one the kit validates against; edit it here, and keep other demo repos in step.",
+  "$comment": "Copied from the Learning Hub content-pack schema (2026-10-20). This copy is the one the kit validates against; edit it here, and keep other demo repos in step.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.invalid/demo-kit/content-pack.schema.json",
   "title": "Demo content pack",

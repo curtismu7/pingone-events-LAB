@@ -20,7 +20,7 @@ PingOne keeps a status for each subscription: when it last tried, when it last s
 
 ## The silent failure
 
-The worst failure is not an error. If the address serves a web page, PingOne gets 200 OK and records success while every event is thrown away. Compare the two numbers: what PingOne says it delivered, and what this app stored.
+The worst failure is not an error. If the address serves a web page, PingOne gets 200 OK and records success while every event is thrown away. Compare the two numbers: what PingOne says it delivered, and what this app stored. This is inferred from PingOne's own status fields and older notes, not re-tested here.
 
 ## Pull is not the same feed
 
@@ -47,7 +47,7 @@ Mock proves the shape of what would be sent and how failures are handled. Forwar
 5. **Session updates dominate.** On a real tenant session updates were the largest group by far. A table sorted by time buries the interesting events: filter by type.
 6. **A risk evaluation.** A risk result is an event like any other, so it can be forwarded and alerted on. (Event names in this scenario are illustrative: UNVERIFIED.)
 7. **The receiver answers 503.** If this app (or the ingress in front of it) is down, PingOne records the delivery as FAILED and nothing arrives. Switch the scenario, press Send test webhook, and compare what PingOne would record with what the app stored.
-8. **The site answers 200 with a web page.** The trap: a destination that serves the single-page app returns 200 OK with HTML. PingOne records SUCCESS, the events are thrown away, and nothing looks wrong. The only tell is that the number PingOne says it delivered and the number stored here do not match.
+8. **The site answers 200 with a web page.** The trap: a destination that serves the single-page app returns 200 OK with HTML. PingOne records SUCCESS, the events are thrown away, and nothing looks wrong. The only tell is that the number PingOne says it delivered and the number stored here do not match. (Inferred, not re-tested: see the facts on the Setup tab.)
 9. **The cluster says 429 (too many requests).** Forwarding is queued and retried with backoff, then counted as failed. The webhook answer to PingOne is never affected, and the events are still on this page.
 10. **The cluster says 503.** Same handling as 429: capped retries, a visible failed counter, and a bounded queue that drops the oldest event (and counts it) rather than growing without limit.
 11. **The cluster cannot be reached.** A refused connection is retried too. A down Elasticsearch must never break the receiver or the page, and this scenario proves it: keep sending events and watch the counters, not the page.

@@ -43,7 +43,7 @@ test('CI: Node 26 only, GitHub-hosted, the UI-standard check, gitleaks, forbidde
   const ci = read('.github/workflows/ci.yml');
   assert.match(ci, /node: \[26\]/); assert.match(ci, /runs-on: ubuntu-latest/); assert.ok(!/self-hosted/.test(ci));
   assert.match(ci, /actions\/checkout@v5/); assert.match(ci, /actions\/setup-node@v5/);
-  assert.match(ci, /check-ui-standard\.sh/); assert.match(ci, /gitleaks/); assert.match(ci, /FORBIDDEN_STRINGS/); assert.match(ci, /check-no-ai-attribution\.sh/); assert.match(ci, /PORT=7802 npm run doctor/);
+  assert.match(ci, /check-ui-standard\.sh/); assert.match(ci, /node scripts\/conformance\.mjs \. --new --tier=Demo/); assert.match(ci, /npm audit --omit=dev/); assert.match(ci, /gitleaks/); assert.match(ci, /FORBIDDEN_STRINGS/); assert.match(ci, /check-no-ai-attribution\.sh/); assert.match(ci, /PORT=7802 npm run doctor/);
 });
 
 test('no shipped text names a real customer, company, tenant, public host or cluster (only the family\'s local alias local.ping-devops.com may appear)', () => {
@@ -54,7 +54,7 @@ test('no shipped text names a real customer, company, tenant, public host or clu
       if (skip.has(name)) continue;
       const p = path.join(dir, name);
       if (fs.statSync(p).isDirectory()) walk(p);
-      else if (!['repo.test.mjs', 'story.test.js', 'content-pack.test.mjs', 'k8s.test.mjs', 'App.test.jsx', 'ping-logo.png'].some((n) => p.endsWith(n))) {
+      else if (!['repo.test.mjs', 'story.test.js', 'content-pack.test.mjs', 'k8s.test.mjs', 'review.test.js', 'App.test.jsx', 'conformance.mjs', 'ping-logo.png'].some((n) => p.endsWith(n))) {
         const t = fs.readFileSync(p, 'utf8').toLowerCase();
         for (const w of ['united airlines', 'mileageplus', 'datapower', 'optum', 'unitedhealth', 'uhg', 'member benefit', 'ngrok', 'cmuir', 'nebula-decaf']) if (t.includes(w)) hits.push(`${path.relative(root, p)}: ${w}`);
         if (/(?<!local\.)ping-devops\.com/.test(t)) hits.push(`${path.relative(root, p)}: a public ping-devops.com host`);

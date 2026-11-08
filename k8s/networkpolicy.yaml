@@ -1,8 +1,13 @@
-# The namespace already uses default-deny plus an allow policy for some labs (see pingone-signin-lab); this follows that pattern.
-# Ingress: the app's port, from anywhere in the cluster (the public ingress controller lives in another namespace).
-# Egress: DNS, and HTTPS / the Elasticsearch port to the outside, because the two things this app may call are PingOne's API (443) and the
-# owner's own cluster (443 or 9200). A plain NetworkPolicy cannot name a host, so the app's own netguard is what narrows this to the
-# configured hosts. Delete the 9200 line if your cluster is on 443.
+# What the namespace does today (read-only, 2026-11-07): it uses a default-deny policy plus an allow-ingress policy per lab (for example
+# pingone-signin-lab-default-deny and pingone-signin-lab-allow-ingress; the allow policy there names the app port and no source). This one follows
+# the same idea but is narrower:
+#  - Ingress: the app port only, and only from the public ingress controller's pods. That controller runs in the namespace ingress-nginx-public
+#    (label kubernetes.io/metadata.name=ingress-nginx-public; its pods carry app.kubernetes.io/name=ingress-nginx and serve the class nginx-public).
+#    Probes come from the kubelet on the node, which common CNIs allow regardless of policy: UNVERIFIED on this cluster, see k8s/README.md.
+#  - Egress: DNS to CoreDNS (namespace kube-system, k8s-app=kube-dns), and HTTPS (443) / the Elasticsearch port (9200) to the outside, because the only
+#    things this app may call are PingOne's API and the owner's own cluster. A plain NetworkPolicy cannot name a host, so the app's netguard narrows it.
+#    The private ranges and the link-local range (cloud metadata) are EXCLUDED from that rule, so the pod cannot reach in-cluster services or the
+#    metadata address. If the owner's Elasticsearch has a private address, add a second rule for that exact address; delete 9200 if it is on 443.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -13,12 +18,26 @@ spec:
     matchLabels: { app: pingone-events-lab }
   policyTypes: ["Ingress", "Egress"]
   ingress:
-    - ports:
+    - from:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: ingress-nginx-public }
+          podSelector:
+            matchLabels: { app.kubernetes.io/name: ingress-nginx }
+      ports:
         - { protocol: TCP, port: 7802 }
   egress:
-    - ports:
+    - to:
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: kube-system }
+          podSelector:
+            matchLabels: { k8s-app: kube-dns }
+      ports:
         - { protocol: UDP, port: 53 }
         - { protocol: TCP, port: 53 }
-    - ports:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16"]
+      ports:
         - { protocol: TCP, port: 443 }
         - { protocol: TCP, port: 9200 }

@@ -11,7 +11,7 @@ const STORY = {
     { id: "receiver-down", kind: "delivery", title: "The receiver answers 503", delivery: "receiver_503", lesson: "Door shut." },
     { id: "cluster-throttled", kind: "sink", title: "The cluster says 429", sink: "throttled", lesson: "Queued and retried." },
   ],
-  facts: [{ id: "f1", status: "measured", text: "A measured fact.", source: "One tenant." }, { id: "f2", status: "UNVERIFIED", text: "A cluster claim.", source: "Not tested." }],
+  facts: [{ id: "f1", status: "measured", text: "A measured fact.", source: "One tenant." }, { id: "f2", status: "UNVERIFIED", text: "A cluster claim.", source: "Not tested." }, { id: "silent-discard", status: "inferred", text: "A web page answering 200.", source: "Older notes." }],
   talkTrack: [{ id: "say-first", title: "Say first", say: "Everything is simulated." }, { id: "silent", title: "The silent failure", say: "Compare the two numbers." }, { id: "forward", title: "Forward", say: "It is off until you switch it on." }],
   sinkScenarios: { healthy: "Every document is indexed.", throttled: "429 handling.", unavailable: "503 handling.", unreachable: "Refused." },
   setup: {
@@ -49,7 +49,7 @@ function mockFetch() {
     if (url === "/api/mock/play") { state.events = [...state.events, ev(3)]; return json({ played: JSON.parse(opts.body).name, status: 200, sent: 4, stored: 4 }); }
     if (url === "/api/mock/delivery") { state.delivery = JSON.parse(opts.body).scenario; return json({ scenario: state.delivery }); }
     if (url === "/webhook/pingone-events") return json({ received: true, count: 1, stored: 1, duplicates: 0, traceId: "a".repeat(32), hops: [{ n: 1, from: "sender", to: "receiver", label: "A delivery reaches the receiver", traceparent: `00-${"a".repeat(32)}-${"1".repeat(16)}-01`, request: "POST /webhook/pingone-events", response: "200: ok" }] });
-    if (url === "/api/delivery") return json(state.mode === "real" ? { source: "real", receiver: { paths: ["/webhook/pingone-events", "/webhook/pingone"], publicHostConfigured: false, credentialConfigured: false, stored: 3, capacity: 1000, duplicates: 0 }, pull: { available: false, hint: "The PingOne pull needs the worker settings.", last: null } } : DELIVERY({ scenario: state.delivery }));
+    if (url === "/api/delivery") return json(state.mode === "real" ? { source: "real", receiver: { paths: ["/webhook/pingone-events", "/webhook/pingone"], publicHostConfigured: false, credentialConfigured: false, stored: 3, capacity: 1000, duplicates: 0, persistence: { durability: "ok", writeFailures: 0, lastError: null, notice: null } }, pull: { available: false, hint: "The PingOne pull needs the worker settings.", last: null } } : DELIVERY({ scenario: state.delivery }));
     if (url === "/api/sink" && opts.method === "POST") {
       const b = JSON.parse(opts.body);
       if (state.mode === "real" && b.enabled && b.confirm !== true) return json({ error: "confirm_required", detail: "Forwarding writes to your cluster." }, 400);
@@ -220,7 +220,7 @@ describe("delivery", () => {
   });
   it("Real: a pull shows subscriptions and failed deliveries", async () => {
     state.mode = "real";
-    override["/api/delivery"] = async () => ({ ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => ({ source: "real", receiver: { paths: ["/webhook/pingone-events"], publicHostConfigured: true, credentialConfigured: true, stored: 0, capacity: 1000, duplicates: 0 }, pull: { available: true, hint: null, last: null } }) });
+    override["/api/delivery"] = async () => ({ ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => ({ source: "real", receiver: { paths: ["/webhook/pingone-events"], publicHostConfigured: true, credentialConfigured: true, stored: 0, capacity: 1000, duplicates: 0, persistence: { durability: "ok", writeFailures: 0, lastError: null, notice: null } }, pull: { available: true, hint: null, last: null } }) });
     override["/api/pull"] = async () => ({ ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => ({ at: "2026-11-07T12:00:00.000Z", pulled: 5, stored: 5, duplicates: 0, rejected: 0, traceId: "a".repeat(32), hops: [], subscriptions: [{ id: "s1", name: "EXAMPLE-SUB", enabled: true, destination: "https://hook.example/webhook/pingone-events", connectionStatus: { status: "FAILED", lastResponseCode: "503", lastResponseDetails: "Delivery failed", lastAttemptedAt: "2026-11-07T11:00:00Z", lastSuccessfulAt: null } }], failedDeliveries: { total: 2, bySubscription: [{ subscription: "EXAMPLE-SUB", count: 2, lastAt: "2026-11-07T11:00:00Z", lastReason: "Connection attempt failed with error: 503" }] } }) });
     render(<App />);
     await nav("Delivery");
@@ -228,6 +228,38 @@ describe("delivery", () => {
     const res = await screen.findByTestId("pull-result");
     expect(res).toHaveTextContent("Pulled 5 activities"); expect(within(res).getByTestId("sub-row")).toHaveTextContent("FAILED");
     expect(res).toHaveTextContent("EXAMPLE-SUB: 2 failed");
+  });
+});
+
+describe("review fixes in the UI", () => {
+  it("the events table labels every cell, so the phone layout shows Status, Actor and Resource as cards", async () => {
+    await ready();
+    const row = screen.getAllByTestId("event-row")[0];
+    expect([...row.querySelectorAll("td")].map((td) => td.getAttribute("data-label"))).toEqual(["Time (UTC)", "Event", "Actor", "Status", "Resource", "Correlation"]);
+    const { readFileSync } = await import("node:fs");
+    const css = readFileSync(`${process.cwd()}/src/app.css`, "utf8");
+    expect(css).toMatch(/@media \(max-width: 600px\)[\s\S]*\.logtable td::before \{ content: attr\(data-label\)/);
+  });
+  it("the browser uses the default workspace, so the reset API and script act on what it shows (and ?workspace= opens an isolated one)", async () => {
+    const { workspaceId } = await import("./workspace");
+    expect(workspaceId()).toBe("default");
+    await ready();
+    expect(calls.find((c) => c.url.startsWith("/api/events")).opts.headers["x-workspace"]).toBe("default");
+  });
+  it("Real: a failing disk is shown on the Delivery tab with the count and the reason", async () => {
+    state.mode = "real";
+    override["/api/delivery"] = async () => ({ ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => ({ source: "real", receiver: { paths: ["/webhook/pingone-events"], publicHostConfigured: true, credentialConfigured: true, stored: 2, capacity: 1000, duplicates: 0, persistence: { durability: "failing", writeFailures: 3, lastError: "could not write the events file (EACCES): events are kept in memory only and would be lost on a restart", notice: null } }, pull: { available: false, hint: "x", last: null } }) });
+    render(<App />);
+    await nav("Delivery");
+    const d = await screen.findByTestId("durability");
+    expect(d).toHaveTextContent("failing"); expect(d).toHaveTextContent("3 failed write(s)"); expect(d).toHaveTextContent("kept in memory only");
+  });
+  it("the silent-discard explanation carries its evidence label (inferred, not measured)", async () => {
+    await ready(); await nav("Delivery");
+    expect(await screen.findByTestId("door")).toBeInTheDocument();
+    override["/api/delivery"] = async () => ({ ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => DELIVERY({ scenario: "spa_html", scenarios: { ...DELIVERY().scenarios, spa_html: { ...DELIVERY().scenarios.spa_html, fact: "silent-discard" } } }) });
+    await userEvent.click(screen.getByTestId("door-spa_html"));
+    expect(await screen.findByTestId("door-fact")).toHaveTextContent("inferred");
   });
 });
 

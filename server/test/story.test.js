@@ -26,6 +26,17 @@ test('every {{cast}} token in the story is defined in every vertical pack (and a
   assert.equal(verticalFrom('finance'), 'finance'); assert.equal(verticalFrom('nope'), 'retail');
 });
 
+test('rule 10 covers the diagram files too: every {{token}} in server/diagrams/*.json is defined in every vertical, and the guard fires on an undefined one', async () => {
+  const fs2 = await import('node:fs'); const dir = new URL('../diagrams/', import.meta.url);
+  const files = fs2.readdirSync(dir).filter((f) => f.endsWith('.json')); assert.ok(files.length >= 1);
+  for (const f of files) for (const [name, cast] of Object.entries(VERTICALS)) assert.deepEqual(unfilled(fs2.readFileSync(new URL(f, dir), 'utf8'), cast), [], `${f} / ${name}`);
+  const bad = { ...rawDiagram('event-pipeline'), lede: 'Hello {{castNope}}' };
+  assert.deepEqual(unfilled(JSON.stringify(bad), DEFAULT_CAST), ['castNope']);
+  // The doctor reads the same data: injecting a bad token into the story's text makes its token check name it.
+  const { runChecks: rc } = await import('../src/doctor.js'); const checks = await rc();
+  assert.equal(checks.find((c) => c.id === 'story-tokens').level, 'pass'); assert.equal(checks.find((c) => c.id === 'verticals').level, 'pass');
+});
+
 test('the story uses its cast: each vertical changes the names in the lessons, and no token survives', () => {
   const retail = JSON.stringify(buildStory(VERTICALS.retail)); const health = JSON.stringify(buildStory(VERTICALS.health));
   assert.notEqual(retail, health); assert.ok(retail.includes('Northwind Retail')); assert.ok(health.includes('Contoso Health'));
@@ -44,6 +55,16 @@ test('every fact is labelled, and the UNVERIFIED ones include everything about a
   assert.ok(facts.every((f) => ['measured', 'inferred', 'UNVERIFIED'].includes(f.status) && f.source && f.text));
   for (const id of ['es-bulk', 'es-429', 'kibana']) assert.equal(facts.find((f) => f.id === id).status, 'UNVERIFIED', id);
   assert.ok(facts.filter((f) => f.status === 'measured').every((f) => /tenant|query/i.test(f.source)), 'a measured fact names where it was measured');
+});
+
+test('15. the silent-discard claim is labelled with the evidence it really has (inferred, not measured), in the facts, the scenario, the delivery panel data and the talk track', async () => {
+  const story = rawStory();
+  const f = story.facts.find((x) => x.id === 'silent-discard');
+  assert.equal(f.status, 'inferred'); assert.match(f.text, /NOT been re-tested|not been re-tested/i); assert.ok(f.source.length > 40);
+  assert.match(story.scenarios.find((x) => x.id === 'silent-discard').lesson, /Inferred, not re-tested/);
+  assert.equal(story.deliveryScenarios.spa_html.fact, 'silent-discard'); assert.match(story.deliveryScenarios.spa_html.explain, /INFERRED, not re-tested/);
+  assert.match(story.talkTrack.find((t) => t.id === 'silent').say, /inferred/i);
+  assert.match(fs.readFileSync(new URL('../../docs/talk-track.md', import.meta.url), 'utf8'), /inferred from PingOne/i);
 });
 
 test('every scenario teaches what it says: events parse and share a correlation id; delivery and sink scenarios exist', () => {

@@ -79,6 +79,10 @@ export function allowedExtraHosts(env = process.env) {
 // Everything else stays loopback.
 export const WEBHOOK_PATHS = ['/webhook/pingone-events', '/webhook/pingone'];
 export const WEBHOOK_PATH = WEBHOOK_PATHS[0];
+// A request path is a webhook path if, ignoring case and ONE trailing slash, it is one of the two names. Doubled slashes are never normalised
+// into a match: they are refused outright (see appPathProblem), so //webhook/pingone can never fall through to the web page.
+export const isWebhookPath = (p) => WEBHOOK_PATHS.includes(String(p).replace(/\/$/, '').toLowerCase());
+export const hasDoubledSlash = (p) => /\/{2,}/.test(String(p));
 export function webhookHosts(env = process.env) {
   const hosts = String(env.WEBHOOK_ALLOWED_HOSTS || '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
   for (const h of hosts) if (!HOSTNAME.test(h)) throw new Error(`WEBHOOK_ALLOWED_HOSTS: not a host name: ${h}`);
@@ -91,33 +95,76 @@ export const hostCheckFor = (env = process.env) => function hostCheckWithEnv(req
   const host = hostOf(req.headers.host);
   if (isLoopbackHost(host) || allowedExtraHosts(env).has(host)) return next();
   // A public host is accepted for the webhook paths only (and only for the methods PingOne uses).
-  if (WEBHOOK_PATHS.includes(req.path) && ['POST', 'HEAD', 'OPTIONS'].includes(req.method) && webhookHosts(env).has(host)) return next();
+  if (isWebhookPath(req.path) && ['POST', 'HEAD', 'OPTIONS'].includes(req.method) && webhookHosts(env).has(host)) return next();
   return res.status(403).json({ error: 'bad_host', message: 'Host must be loopback or on LAB_ALLOWED_HOSTS' });
 };
 export const hostCheck = (req, res, next) => hostCheckFor(process.env)(req, res, next);
 
-// SSRF guard for the one outbound target the owner configures: link-local, metadata and unspecified addresses are never allowed.
+// SSRF guard for the one outbound target the owner configures: link-local, cloud-metadata and unspecified addresses are never allowed,
+// whatever form they are written in. Loopback and private ranges are allowed (a local or LAN cluster is legitimate).
+import net from 'node:net';
+
+// inet_aton-style IPv4 literal (1 to 4 parts; each decimal, 0x hex or 0-leading octal) -> 4 bytes, or null. new URL() already canonicalises
+// these for http(s) URLs; this makes the function safe on its own for any caller.
+function ipv4Bytes(h) {
+  if (!/^[0-9a-fx.]+$/i.test(h)) return null;
+  const parts = h.split('.');
+  if (parts.length > 4 || parts.some((x) => x === '')) return null;
+  const nums = parts.map((x) => (/^0x[0-9a-f]+$/i.test(x) ? parseInt(x, 16) : /^0[0-7]*$/.test(x) && x.length > 1 ? parseInt(x, 8) : /^[0-9]+$/.test(x) ? parseInt(x, 10) : NaN));
+  if (nums.some((n) => !Number.isFinite(n) || n < 0)) return null;
+  const last = nums.pop();
+  if (nums.some((n) => n > 255) || last >= 256 ** (4 - nums.length)) return null;
+  let v = last; nums.forEach((n, i) => { v += n * 256 ** (3 - i); });
+  return [(v / 2 ** 24) & 255, (v / 2 ** 16) & 255, (v / 2 ** 8) & 255, v & 255];
+}
+const blockedV4 = ([a, b, c, d]) => a === 0 || (a === 169 && b === 254) || (a === 100 && b === 100 && c === 100 && d === 200) || (a === 192 && b === 0 && c === 0 && d === 192) || (a === 168 && b === 63 && c === 129 && d === 16) || a >= 224;
+// 16 bytes of an IPv6 address, or null.
+function ipv6Bytes(h) {
+  if (net.isIPv6(h) === false) return null;
+  let t = h; const m = /^(.*:)(\d+\.\d+\.\d+\.\d+)$/.exec(t);
+  if (m) { const q = m[2].split('.').map(Number); t = `${m[1]}${((q[0] << 8) | q[1]).toString(16)}:${((q[2] << 8) | q[3]).toString(16)}`; }
+  const [l, r = null] = t.split('::');
+  const L = l ? l.split(':') : []; const R = r === null ? null : (r ? r.split(':') : []);
+  const groups = R === null ? L : [...L, ...Array(8 - L.length - R.length).fill('0'), ...R];
+  if (groups.length !== 8) return null;
+  return groups.flatMap((g) => { const n = parseInt(g, 16); return [(n >> 8) & 255, n & 255]; });
+}
 export function isBlockedTargetHost(host) {
-  const h = String(host).toLowerCase().replace(/^\[|\]$/g, '');
-  if (!h || h === '0.0.0.0' || h === '::' || h === 'metadata.google.internal' || h === 'metadata' || h.endsWith('.internal')) return true;
-  if (/^169\.254\./.test(h) || /^100\.100\.100\.200$/.test(h)) return true; // link-local + a cloud metadata address
-  if (/^fe[89ab][0-9a-f]:/.test(h) || h === 'fd00:ec2::254' || /^::ffff:169\.254\./.test(h)) return true;
-  return false;
+  let h = String(host).trim().toLowerCase().replace(/^\[|\]$/g, '').replace(/%.*$/, '').replace(/\.+$/, ''); // brackets, zone id, trailing dots
+  if (!h) return true;
+  const v4 = ipv4Bytes(h);
+  if (v4) return blockedV4(v4);
+  const v6 = ipv6Bytes(h);
+  if (v6) {
+    if (v6.every((x) => x === 0)) return true; // ::
+    if ((v6[0] === 0xfe) && ((v6[1] & 0xc0) === 0x80)) return true; // fe80::/10 link-local
+    if (v6[0] === 0xfd && v6[1] === 0x00 && v6[2] === 0x0e && v6[3] === 0xc2) return true; // fd00:ec2::/32 (AWS)
+    if (v6[0] === 0xff) return true; // multicast
+    const embedded = v6.slice(12);
+    const mapped = v6.slice(0, 10).every((x) => x === 0) && v6[10] === 0xff && v6[11] === 0xff; // ::ffff:a.b.c.d
+    const compat = v6.slice(0, 12).every((x) => x === 0) && embedded.slice(0, 3).some((x) => x !== 0); // ::a.b.c.d (but not ::1, the loopback)
+    const nat64 = v6[0] === 0x00 && v6[1] === 0x64 && v6[2] === 0xff && v6[3] === 0x9b && v6.slice(4, 12).every((x) => x === 0); // 64:ff9b::/96
+    if ((mapped || compat || nat64) && blockedV4(embedded)) return true;
+    return false;
+  }
+  return h === 'metadata' || h === 'instance-data' || h.endsWith('.internal') || h === 'internal';
 }
 
 const WRITE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-export function sameOriginWrites(req, res, next) {
+// A write must be same-origin. The Origin's host must be the request's real Host, OR a host name the admin listed in LAB_ALLOWED_HOSTS (the
+// page's own public host, which an ingress that rewrites Host would otherwise hide). X-Forwarded-Host is a header any client can set: it
+// is never consulted.
+export const sameOriginWritesFor = (env = process.env) => function sameOriginWritesWithEnv(req, res, next) {
   if (!WRITE.has(req.method)) return next();
   const site = req.headers['sec-fetch-site'];
   if (site && site !== 'same-origin' && site !== 'none') return res.status(403).json({ error: 'cross_origin', message: 'writes must be same-origin' });
   const origin = req.headers.origin;
   if (origin) {
-    // Behind the shared lab-proxy the browser origin is local.ping-devops.com:8443 while Host is the lab's
-    // own name: trust X-Forwarded-Host, which only the proxy sets, when it is there.
-    const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+    const host = String(req.headers.host || '').toLowerCase();
     let ok = false;
-    try { ok = new URL(origin).host.toLowerCase() === host; } catch { /* malformed */ }
+    try { const o = new URL(origin); ok = o.host.toLowerCase() === host || (o.protocol === 'https:' || isLoopbackHost(o.hostname)) && allowedExtraHosts(env).has(o.hostname.toLowerCase()); } catch { /* malformed */ }
     if (!ok) return res.status(403).json({ error: 'cross_origin', message: 'writes must be same-origin' });
   }
   next();
-}
+};
+export const sameOriginWrites = (req, res, next) => sameOriginWritesFor(process.env)(req, res, next);

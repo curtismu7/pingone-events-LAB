@@ -9,6 +9,9 @@ const DEMO = { id: 'pingone-events-lab', name: 'PingOne Events Lab', version };
 
 export function createHealth({ runChecks = defaultChecks, now = () => new Date(), intervalMs = 60_000 } = {}) {
   let last = { state: 'unknown', at: null };
+  // The contract forbids extra fields, so a store that cannot persist (events would be lost on restart) shows as state `broken`; the detail is on the
+  // authenticated Delivery panel and /api/info.
+  let degraded = () => false;
   async function refresh() {
     try { last = { state: allPassed(await runChecks()) ? 'ready' : 'broken', at: now().toISOString() }; }
     catch { last = { state: 'unknown', at: now().toISOString() }; }
@@ -20,8 +23,8 @@ export function createHealth({ runChecks = defaultChecks, now = () => new Date()
   const router = express.Router();
   router.get('/', (_req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.json({ schema: 'demo-health/1', at: last.at || now().toISOString(), state: last.state, runtime: 'offline', demo: DEMO });
+    res.json({ schema: 'demo-health/1', at: last.at || now().toISOString(), state: last.state === 'ready' && degraded() ? 'broken' : last.state, runtime: 'offline', demo: DEMO });
   });
   router.all('/', (_req, res) => res.set('Allow', 'GET').status(405).json({ error: 'method_not_allowed' }));
-  return { router, refresh, ready, stop: () => clearInterval(timer) };
+  return { router, refresh, ready, setDegraded: (fn) => { degraded = typeof fn === 'function' ? fn : () => false; }, stop: () => clearInterval(timer) };
 }

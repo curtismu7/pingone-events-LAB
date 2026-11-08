@@ -9,7 +9,7 @@ export const safeEqual = (a, b) => timingSafeEqual(digest(a), digest(b));
 export function basicCredentials(req) {
   const h = req.headers.authorization;
   if (typeof h !== 'string' || h.length > 600) return null;
-  const m = /^Basic ([A-Za-z0-9+/=]+)$/.exec(h.trim());
+  const m = /^basic ([A-Za-z0-9+/=]+)$/i.exec(h.trim()); // the scheme name is case-insensitive (RFC 7235)
   if (!m) return null;
   const text = Buffer.from(m[1], 'base64').toString('utf8');
   const i = text.indexOf(':');

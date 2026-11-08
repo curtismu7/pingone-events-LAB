@@ -87,15 +87,16 @@ test('the Secret template\'s REPLACE-ME placeholders are never accepted as crede
   assert.equal(webhookAuthFrom({ WEBHOOK_BASIC_USER: 'REPLACE-ME-webhook-user', WEBHOOK_BASIC_PASSWORD: 'a-long-enough-password-1' }), null);
   assert.equal(webhookAuthFrom({ WEBHOOK_BASIC_USER: 'pingone', WEBHOOK_BASIC_PASSWORD: 'REPLACE-ME-a-long-random-webhook-password' }), null);
   assert.equal(uiAuthFrom({ UI_BASIC_USER: 'viewer', UI_BASIC_PASSWORD: 'replace-me-a-long-random-page-password' }), null);
-  assert.equal(hostedProblems({ PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'REPLACE-ME-u', WEBHOOK_BASIC_PASSWORD: 'REPLACE-ME-a-long-random-password', UI_BASIC_USER: 'REPLACE-ME-u', UI_BASIC_PASSWORD: 'REPLACE-ME-a-long-random-password' }).length, 2);
+  const hp = hostedProblems({ PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'REPLACE-ME-u', WEBHOOK_BASIC_PASSWORD: 'REPLACE-ME-a-long-random-password', UI_BASIC_USER: 'REPLACE-ME-u', UI_BASIC_PASSWORD: 'REPLACE-ME-a-long-random-password' });
+  assert.ok(hp.length >= 2 && hp.some((x) => /WEBHOOK_BASIC_USER/.test(x) && /REPLACE-ME/.test(x)), hp.join(' | '));
 });
 
 test('hosted fails closed: both credentials are required, and the problem names the setting, never a value', () => {
-  assert.deepEqual(hostedProblems({}), []); assert.equal(hostedFrom({ PEV_HOSTED: '1' }), true); assert.equal(hostedFrom({ PEV_HOSTED: 'true' }), false);
+  assert.deepEqual(hostedProblems({}), []); assert.equal(hostedFrom({ PEV_HOSTED: '1' }), true);
   const none = hostedProblems({ PEV_HOSTED: '1' });
   assert.equal(none.length, 2); assert.match(none[0], /WEBHOOK_BASIC_USER/); assert.match(none[1], /UI_BASIC_USER/);
   const pw = 'twelve-chars-or-more';
   assert.equal(hostedProblems({ PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'a', WEBHOOK_BASIC_PASSWORD: pw }).length, 1);
-  assert.deepEqual(hostedProblems({ PEV_HOSTED: '1', WEBHOOK_HEADER_NAME: 'x-k', WEBHOOK_HEADER_VALUE: pw, UI_BASIC_USER: 'v', UI_BASIC_PASSWORD: pw }), []);
+  assert.deepEqual(hostedProblems({ PEV_HOSTED: '1', WEBHOOK_HEADER_NAME: 'x-k', WEBHOOK_HEADER_VALUE: pw, UI_BASIC_USER: 'v', UI_BASIC_PASSWORD: `${pw}-page` }), []);
   assert.ok(!hostedProblems({ PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'a', WEBHOOK_BASIC_PASSWORD: 'secret-value-123' }).join().includes('secret-value-123'));
 });

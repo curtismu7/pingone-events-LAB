@@ -108,6 +108,15 @@ input[type="text"]:focus-visible, input[type="checkbox"]:focus-visible { outline
 .logtable { min-width: 38rem; }
 .logtable th, .logtable td { overflow-wrap: normal; }
 .logtable code { overflow-wrap: anywhere; }
+/* On a phone the events table becomes a stack of cards, one per event, with every field labelled (Status, Actor and Resource stay visible). */
+@media (max-width: 600px) {
+  .logtable { min-width: 0; }
+  .logtable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .logtable, .logtable tbody, .logtable tr, .logtable td { display: block; }
+  .logtable tr { border: 1px solid var(--th-border); border-top: 4px solid var(--accent); border-radius: var(--radius-md); margin: 10px 0; padding: 6px 10px; background: var(--th-bg-card); }
+  .logtable td { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 8px; border: 0; padding: 3px 0; font-size: var(--font-size-sm); }
+  .logtable td::before { content: attr(data-label); font-weight: 600; color: var(--th-text-muted); }
+}
 .nowrap { white-space: nowrap; }
 .row--on { background: var(--th-bg-hover); }
 .drawer { border-top: 4px solid var(--accent); }

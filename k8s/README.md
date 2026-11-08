@@ -22,7 +22,18 @@ Use an immutable tag (a commit hash), never `:latest` or `:HEAD`: `deploy.sh` re
 
 ## Deploy
 ```sh
-NAMESPACE=<ns> IMAGE=ghcr.io/curtismu7/pingone-events-lab:<tag> SE_HOST=<host PingOne posts to> UI_HOST=<the page host> CLUSTER_ISSUER=<issuer> k8s/deploy.sh --dry-run
-OWNER_APPROVED=1 NAMESPACE=... IMAGE=... SE_HOST=... UI_HOST=... CLUSTER_ISSUER=... k8s/deploy.sh
+KUBE_CONTEXT=<ctx> NAMESPACE=<ns> IMAGE=ghcr.io/curtismu7/pingone-events-lab:sha-<hex> SE_HOST=<host PingOne posts to> UI_HOST=<the page host> CLUSTER_ISSUER=<issuer> k8s/deploy.sh --dry-run
+OWNER_APPROVED=1 KUBE_CONTEXT=... NAMESPACE=... IMAGE=... SE_HOST=... UI_HOST=... CLUSTER_ISSUER=... WEBHOOK_BASIC_USER=... WEBHOOK_BASIC_PASSWORD=... k8s/deploy.sh
 ```
-The script verifies by content: the pod's own `/api/health` says `demo-health/1`, ready, this app; the receiver and the page answer `401` without a credential; the pod's `imageID` matches `IMAGE` (and the registry digest when docker can read it). Hand over a URL only after browser proof. Updating later: apply again with a new `IMAGE`; if you use `kubectl set image`, name the container (`app=...`), never `*=`, and read the new ReplicaSet.
+- `KUBE_CONTEXT` is mandatory and is passed to every `kubectl` call; there is no ambient context.
+- `IMAGE` must be immutable: a `:sha-<hex>` tag or an `@sha256:` digest. `latest`, `HEAD`, an untagged name and any other tag are refused.
+- A **read-only preflight** lists every existing ingress host and path that touches `SE_HOST` or `UI_HOST` and fails on a collision (the dry run prints it too). If the cluster cannot be read it stops, unless you set `ALLOW_NO_PREFLIGHT=1`.
+- `WEBHOOK_BASIC_USER` / `WEBHOOK_BASIC_PASSWORD` are the webhook credential the Secret holds; they are used only to verify the public path, reach `curl` on stdin (never a command line) and are never printed.
+- The script verifies by content: in the pod, `/api/health` says `demo-health/1`, ready, this app, and the receiver and page answer `401` without a credential; the pod's `imageID` matches `IMAGE` (and the registry digest when docker can read it); and through the **public ingress**, `HEAD https://SE_HOST/webhook/pingone-events` answers `200` with the credential and `401` without it, and `https://UI_HOST/api/info` answers `401`. DNS and the certificate can take minutes, so the public checks retry (`PUBLIC_CHECK_ATTEMPTS`, `PUBLIC_CHECK_SLEEP`). Hand over a URL only after browser proof.
+- Updating later: apply again with a new `IMAGE`; if you use `kubectl set image`, name the container (`app=...`), never `*=`, and read the new ReplicaSet.
+
+## What the ingress must do
+The app trusts exactly one proxy hop for the client address and uses the **right-most** `X-Forwarded-For` entry. nginx-ingress sets or appends that header by default; do not turn that off. If it did stop, every caller would look like the ingress and share one rate-limit bucket (it fails safe, not open).
+
+## NetworkPolicy
+It allows the app port from the `ingress-nginx-public` controller pods, DNS to CoreDNS, and HTTPS / 9200 out excluding private and link-local ranges. The kubelet's probes come from the node, which common CNIs allow regardless of policy; whether this cluster's CNI does is **UNVERIFIED**. If the readiness probe fails after a deploy, that is the first place to look. An Elasticsearch on a private address needs its own egress rule.

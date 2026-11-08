@@ -33,71 +33,71 @@
       "id": "sub",
       "label": "Webhook subscription (your filters)",
       "group": "product",
-      "x": 300,
+      "x": 260,
       "y": 0
     },
     {
       "id": "ingress",
       "label": "Ingress on the SE cluster (webhook path only)",
       "group": "path",
-      "x": 600,
+      "x": 520,
       "y": 0
     },
     {
       "id": "recv",
       "label": "Receiver: /webhook/pingone-events",
       "group": "app",
-      "x": 900,
+      "x": 780,
       "y": 0
     },
     {
       "id": "store",
       "label": "Event store (ring buffer, idempotent)",
       "group": "app",
-      "x": 1200,
-      "y": 160
+      "x": 780,
+      "y": 170
     },
     {
       "id": "page",
       "label": "This page: table, raw JSON, delivery health",
       "group": "app",
-      "x": 1500,
-      "y": 160
+      "x": 520,
+      "y": 170
     },
     {
       "id": "api",
       "label": "PingOne API (read-only)",
       "group": "product",
       "x": 0,
-      "y": 160
+      "y": 340
     },
     {
       "id": "pull",
       "label": "Pull button (owner-run)",
       "group": "app",
-      "x": 600,
-      "y": 160
+      "x": 260,
+      "y": 340
     },
     {
       "id": "queue",
       "label": "Forward queue (bounded, retried)",
       "group": "sink",
-      "x": 900,
-      "y": 320
+      "x": 1040,
+      "y": 0
     },
     {
       "id": "es",
       "label": "Elasticsearch / OpenSearch (yours)",
       "group": "sink",
-      "x": 1200,
-      "y": 320
+      "x": 1040,
+      "y": 170
     },
     {
       "id": "kib",
       "label": "Kibana / OpenSearch Dashboards",
       "group": "sink",
-      "x": 1500,
-      "y": 320
+      "x": 1040,
+      "y": 340
     }
   ],
   "edges": [
@@ -109,7 +109,7 @@
     {
       "source": "sub",
       "target": "ingress",
-      "label": "HTTPS POST + credential (HEAD first)"
+      "label": "POST + credential"
     },
     {
       "source": "ingress",
@@ -129,7 +129,7 @@
     {
       "source": "api",
       "target": "pull",
-      "label": "GET subscriptions, activities"
+      "label": "read-only GETs"
     },
     {
       "source": "pull",
@@ -146,13 +146,13 @@
     {
       "source": "queue",
       "target": "es",
-      "label": "POST /_bulk (_id = eventId)",
+      "label": "POST /_bulk",
       "dashed": true
     },
     {
       "source": "es",
       "target": "kib",
-      "label": "data view pingone-events*",
+      "label": "data view",
       "dashed": true
     }
   ],
