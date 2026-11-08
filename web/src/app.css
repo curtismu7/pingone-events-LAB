@@ -104,6 +104,10 @@ input[type="text"]:focus-visible, input[type="checkbox"]:focus-visible { outline
 .typechips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
 .linkish { padding: 0 8px; font-size: var(--font-size-2xs); }
 .logtable td { font-size: var(--font-size-2xs); }
+/* On a narrow screen the table keeps a readable width and scrolls inside its own box (the .scroll wrapper), never squashed into one-character columns. */
+.logtable { min-width: 38rem; }
+.logtable th, .logtable td { overflow-wrap: normal; }
+.logtable code { overflow-wrap: anywhere; }
 .nowrap { white-space: nowrap; }
 .row--on { background: var(--th-bg-hover); }
 .drawer { border-top: 4px solid var(--accent); }
