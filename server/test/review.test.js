@@ -337,7 +337,7 @@ test('14. the doctor requires Node 26: the threshold is tested on versions eithe
   for (const v of ['26.0.0', '26.8.2', '27.1.0', '30.0.0']) assert.equal(nodeCheck(v).level, 'pass', v);
   for (const v of ['25.9.9', '24.0.0', '22.5.0', '20.20.2', '18.0.0', '0.12.0', 'x.y']) assert.equal(nodeCheck(v).level, 'fail', v);
   assert.match(nodeCheck('20.0.0').detail, /need >= 26/);
-  const node = (await runChecks()).find((c) => c.id === 'node');
+  const node = (await runChecks({ env: {} })).find((c) => c.id === 'node');
   assert.equal(node.level, nodeCheck().level);
 });
 test('14. the doctor fails when a diagram file holds an undefined {{token}}', async () => {
@@ -345,7 +345,7 @@ test('14. the doctor fails when a diagram file holds an undefined {{token}}', as
   const checks = await runChecks({ diagrams: [{ ...rawDiagram('event-pipeline'), lede: 'Hello {{castNope}}' }] });
   const t = checks.find((c) => c.id === 'story-tokens'); assert.equal(t.level, 'fail'); assert.match(t.detail, /castNope/);
   assert.equal(checks.find((c) => c.id === 'verticals').level, 'fail');
-  assert.equal((await runChecks()).find((c) => c.id === 'story-tokens').level, 'pass');
+  assert.equal((await runChecks({ env: {} })).find((c) => c.id === 'story-tokens').level, 'pass');
 });
 
 // ---- the web build is optional: a fresh clone has no web/dist --------------------------------------------------------------------------

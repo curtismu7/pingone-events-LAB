@@ -33,35 +33,35 @@
       "id": "sub",
       "label": "Webhook subscription (your filters)",
       "group": "product",
-      "x": 260,
+      "x": 330,
       "y": 0
     },
     {
       "id": "ingress",
       "label": "Ingress on the SE cluster (webhook path only)",
       "group": "path",
-      "x": 520,
+      "x": 660,
       "y": 0
     },
     {
       "id": "recv",
       "label": "Receiver: /webhook/pingone-events",
       "group": "app",
-      "x": 780,
+      "x": 990,
       "y": 0
     },
     {
       "id": "store",
       "label": "Event store (ring buffer, idempotent)",
       "group": "app",
-      "x": 780,
+      "x": 990,
       "y": 170
     },
     {
       "id": "page",
       "label": "This page: table, raw JSON, delivery health",
       "group": "app",
-      "x": 520,
+      "x": 660,
       "y": 170
     },
     {
@@ -75,28 +75,28 @@
       "id": "pull",
       "label": "Pull button (owner-run)",
       "group": "app",
-      "x": 260,
+      "x": 330,
       "y": 340
     },
     {
       "id": "queue",
       "label": "Forward queue (bounded, retried)",
       "group": "sink",
-      "x": 1040,
+      "x": 1320,
       "y": 0
     },
     {
       "id": "es",
       "label": "Elasticsearch / OpenSearch (yours)",
       "group": "sink",
-      "x": 1040,
+      "x": 1320,
       "y": 170
     },
     {
       "id": "kib",
       "label": "Kibana / OpenSearch Dashboards",
       "group": "sink",
-      "x": 1040,
+      "x": 1320,
       "y": 340
     }
   ],

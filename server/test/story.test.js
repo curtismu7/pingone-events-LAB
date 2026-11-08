@@ -33,7 +33,7 @@ test('rule 10 covers the diagram files too: every {{token}} in server/diagrams/*
   const bad = { ...rawDiagram('event-pipeline'), lede: 'Hello {{castNope}}' };
   assert.deepEqual(unfilled(JSON.stringify(bad), DEFAULT_CAST), ['castNope']);
   // The doctor reads the same data: injecting a bad token into the story's text makes its token check name it.
-  const { runChecks: rc } = await import('../src/doctor.js'); const checks = await rc();
+  const { runChecks: rc } = await import('../src/doctor.js'); const checks = await rc({ env: {} });
   assert.equal(checks.find((c) => c.id === 'story-tokens').level, 'pass'); assert.equal(checks.find((c) => c.id === 'verticals').level, 'pass');
 });
 
@@ -143,7 +143,7 @@ test('GET /api/scenarios, /api/diagram and /api/setup serve the story, the diagr
 });
 
 test('the doctor passes on a clean checkout and fails when a scenario or the netguard is broken', async () => {
-  const checks = await runChecks();
+  const checks = await runChecks({ env: {} });
   assert.equal(allPassed(checks), true, checks.filter((c) => c.level === 'fail').map((c) => c.detail).join('; '));
   assert.deepEqual(['parser', 'scenarios', 'sink-shape', 'netguard', 'hosted', 'diagrams'].filter((id) => !checks.some((c) => c.id === id)), []);
   const bad = await runChecks({ env: { MODE: 'real' } });

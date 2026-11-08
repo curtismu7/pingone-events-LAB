@@ -1,5 +1,5 @@
 .pat-canvas { height: 600px; border: 1px solid var(--th-border); border-radius: var(--radius-lg); background: var(--th-bg-card); }
-.pat-node { padding: 14px 16px; min-width: 110px; max-width: 190px; text-align: center; font-size: var(--font-size-sm); font-weight: 600; color: var(--th-text); background: var(--th-status-info-bg); border: 2px solid var(--th-status-info); border-radius: var(--radius-md); }
+.pat-node { padding: 12px 12px; min-width: 110px; max-width: 150px; text-align: center; font-size: var(--font-size-sm); font-weight: 600; color: var(--th-text); background: var(--th-status-info-bg); border: 2px solid var(--th-status-info); border-radius: var(--radius-md); }
 .pat-node--gateway { border-width: 3px; border-color: var(--th-accent); }
 .pat-node--resource { border-color: var(--th-border-strong); background: var(--th-bg-inset); }
 .pat-node--idp { border-color: var(--th-status-warning); background: var(--th-bg-inset); }

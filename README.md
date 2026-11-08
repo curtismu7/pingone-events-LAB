@@ -18,6 +18,8 @@ It is the standalone version of the PingOne events page in AI-DEMO2 (read-only s
 HOST_PORT=7802 docker compose up --build -d     # OrbStack: published on 127.0.0.1 only
 npm test                              # server (node --test), web (vitest), scripts (node --test)
 npm run doctor                        # preflight; the same checks GET /api/health reports from
+# The tests need no web build and no settings file: they run on a fresh clone (npm ci && npm test). With no web build the server still
+# starts; the API, the webhook and /api/health work, and every other path answers 404 JSON {"error":"web_not_built"}.
 npm run reset                         # Reset a running app's default workspace (the one the browser uses); Real events are kept
 ```
 Mock needs nothing. Real settings come from the shared settings file (`~/Development/.env`; `STANDALONE_ENV` overrides): `PINGONE_ENVIRONMENT_ID`, `PINGONE_REGION`, `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET` for the pull, `ELASTICSEARCH_URL` plus `ELASTICSEARCH_API_KEY` (or user and password) for forwarding. Real is on by default only when configured, and the header toggle switches back and forth at runtime.

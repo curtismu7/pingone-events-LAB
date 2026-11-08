@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createApp, startHttpServer } from '../src/app.js';
 import { createHealth } from '../src/health.js';
+import { runChecks } from '../src/doctor.js';
 import { createEventStore } from '../src/eventStore.js';
 
 // A tiny web build for the tests: they must not depend on `npm run build` having been run (a fresh clone has no web/dist).
@@ -21,7 +22,8 @@ export const CLIENT_ID = '00000000-0000-4000-8000-0000000000c1';
 // env: the settings the app sees (never process.env, so a developer's real settings cannot leak into a test).
 // extra: createApp options (fetchImpl, sinkOptions, pullClient, guard, realStore ...). The real store is in memory unless given.
 export async function withServer(fn, { configFile = '/nonexistent/customer.config.json', env = {}, now, ...extra } = {}) {
-  const health = createHealth({ intervalMs: 3_600_000 });
+  // The health checks read the SAME settings the app was given, never the developer's own environment.
+  const health = createHealth({ intervalMs: 3_600_000, runChecks: () => runChecks({ env }) });
   await health.ready;
   const app = createApp({ health, configFile, env, realStore: extra.realStore || createEventStore({ max: 100 }), webDir: WEB_FIXTURE, ...(now ? { now } : {}), ...extra });
   const { server, url } = await startHttpServer({ port: 0, host: '127.0.0.1', app });

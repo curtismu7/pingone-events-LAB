@@ -68,3 +68,11 @@ test('the Dockerfile ships the index template the API serves and nothing from th
   const ignore = here('.dockerignore');
   assert.match(ignore, /^k8s$/m); assert.match(ignore, /^!docs\/elasticsearch-index-template\.json$/m);
 });
+
+test('the image does not depend on the build machine\'s file modes: everything under /app is made readable for the unprivileged user (a 0600 package.json once made the container unstartable)', () => {
+  const docker = here('Dockerfile');
+  const run = /^RUN chmod -R a\+rX \/app && mkdir -p \/data && chown node:node \/data$/m.exec(docker);
+  assert.ok(run, 'a RUN that chmods /app a+rX and prepares /data');
+  assert.ok(docker.indexOf(run[0]) > docker.indexOf('COPY --from=build /app/web/dist web/dist'), 'it runs AFTER the last COPY, so it covers every copied file');
+  assert.ok(docker.indexOf(run[0]) < docker.indexOf('USER node'), 'and before the switch to the unprivileged user');
+});
