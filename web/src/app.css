@@ -119,7 +119,10 @@ input[type="text"]:focus-visible, input[type="checkbox"]:focus-visible { outline
 }
 .nowrap { white-space: nowrap; }
 .row--on { background: var(--th-bg-hover); }
-.drawer { border-top: 4px solid var(--accent); }
+.drawer { border-top: 4px solid var(--accent); padding: 8px 4px; }
+.row--click { cursor: pointer; }
+.row--click:hover { background: var(--th-bg-card); }
+.row--detail > td { padding: 0; background: var(--th-bg-card); }
 .kv__row { display: contents; }
 .empty { color: var(--th-text-muted); padding: 12px 0; }
 .big { font-size: var(--font-size-xl); font-weight: 700; margin: 4px 0; }

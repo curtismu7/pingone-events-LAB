@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import Hops from "./Hops";
 import Json from "./Json";
 import { getEvents, playScenario, sendTestWebhook, setDelivery, setSinkScenario } from "../api";
@@ -57,7 +57,6 @@ export default function Events({ story, info, dataSignal, requestedId, onSelect,
   };
   const set = (k, v) => setFilters((f) => ({ ...f, [k]: v }));
   const events = result?.events ?? [];
-  const chosen = events.find((e) => e.eventId === selected) || null;
 
   return (
     <div className="events">
@@ -116,7 +115,8 @@ export default function Events({ story, info, dataSignal, requestedId, onSelect,
               <thead><tr><th>Time (UTC)</th><th>Event</th><th>Actor</th><th>Status</th><th>Resource</th><th>Correlation</th></tr></thead>
               <tbody>
                 {events.map((e) => (
-                  <tr key={e.eventId} data-testid="event-row" className={selected === e.eventId ? "row--on" : ""}>
+                  <Fragment key={e.eventId}>
+                  <tr data-testid="event-row" className={`row--click${selected === e.eventId ? " row--on" : ""}`} onClick={(ev) => { if (!ev.target.closest("button, a")) setSelected(selected === e.eventId ? null : e.eventId); }}>
                     <td className="nowrap" data-label="Time (UTC)">{clock(e.timestamp)}</td>
                     <td data-label="Event"><button type="button" className="linkish" aria-pressed={selected === e.eventId} aria-label={`Open ${visible(e.eventType)}`} onClick={() => setSelected(selected === e.eventId ? null : e.eventId)}>{visible(e.eventType)}</button></td>
                     <td data-label="Actor"><code>{e.actorType ? `${e.actorType} ` : ""}{shortId(e.actorId)}</code></td>
@@ -124,23 +124,27 @@ export default function Events({ story, info, dataSignal, requestedId, onSelect,
                     <td data-label="Resource"><code>{shortId(e.resource)}</code></td>
                     <td data-label="Correlation"><code>{shortId(e.correlationId)}</code></td>
                   </tr>
+                  {selected === e.eventId && (
+                    <tr className="row--detail">
+                      <td colSpan={6}>
+                        <aside className="drawer" aria-label="Event detail" data-testid="event-detail">
+                          <div className="panel__head"><h2>{visible(e.eventType)}</h2><button type="button" onClick={() => setSelected(null)} data-testid="close-detail">Close</button></div>
+                          <dl className="kv">
+                            {[["Event id", e.eventId], ["Time", e.timestamp], ["Actor", `${e.actorType || "none"} ${e.actorId}`], ["Status", e.status || "none"], ["Resource", e.resource || "none"], ["Environment", e.environmentId || "none"], ["Correlation id", e.correlationId || "none"], ["Arrived via", e.via], ["Schema", e.schema]].map(([k, v]) => (<div key={k} className="kv__row"><dt>{k}</dt><dd><code>{visible(v)}</code></dd></div>))}
+                          </dl>
+                          <h3>Raw event</h3>
+                          <Json value={e.raw} label="The original event as delivered" testId="raw-json" />
+                        </aside>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </section>
-
-      {chosen && (
-        <aside className="panel drawer" aria-label="Event detail" data-testid="event-detail">
-          <div className="panel__head"><h2>{visible(chosen.eventType)}</h2><button type="button" onClick={() => setSelected(null)} data-testid="close-detail">Close</button></div>
-          <dl className="kv">
-            {[["Event id", chosen.eventId], ["Time", chosen.timestamp], ["Actor", `${chosen.actorType || "none"} ${chosen.actorId}`], ["Status", chosen.status || "none"], ["Resource", chosen.resource || "none"], ["Environment", chosen.environmentId || "none"], ["Correlation id", chosen.correlationId || "none"], ["Arrived via", chosen.via], ["Schema", chosen.schema]].map(([k, v]) => (<div key={k} className="kv__row"><dt>{k}</dt><dd><code>{visible(v)}</code></dd></div>))}
-          </dl>
-          <h3>Raw event</h3>
-          <Json value={chosen.raw} label="The original event as delivered" testId="raw-json" />
-        </aside>
-      )}
 
       {sent && (
         <section className="panel" aria-label="Last test delivery" data-testid="sent">
