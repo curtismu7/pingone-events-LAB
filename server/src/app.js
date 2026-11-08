@@ -34,7 +34,7 @@ import { getNetguard } from './netguard.js';
 import { createWorkspaces, workspaceFrom } from './workspaces.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const WEB_DIST = process.env.WEB_DIST || path.resolve(HERE, '../../web/dist');
+const DEFAULT_WEB_DIST = process.env.WEB_DIST || path.resolve(HERE, '../../web/dist');
 const CONFIG = process.env.CUSTOMER_CONFIG || path.resolve(HERE, '../../customer.config.json');
 const TEMPLATE_FILE = path.resolve(HERE, '../../docs/elasticsearch-index-template.json');
 // What a destination that serves the single-page app returns instead of the receiver (the silent-discard trap).
@@ -75,6 +75,7 @@ const textParam = (raw, max) => (raw === undefined ? undefined : typeof raw === 
 export function createApp({
   health = createHealth(), configFile = CONFIG, env = process.env, now = Date.now,
   workspaces = createWorkspaces({ now }), realStore = null, fetchImpl = null, guard = getNetguard(), sinkOptions = {}, pullClient = null,
+  webDir = DEFAULT_WEB_DIST,
 } = {}) {
   const hosted = hostedFrom(env);
   const problems = hostedProblems(env);
@@ -437,16 +438,18 @@ export function createApp({
     return res.status(500).json({ error: 'internal_error' });
   });
 
-  if (fs.existsSync(path.join(WEB_DIST, 'index.html'))) {
-    app.use(express.static(WEB_DIST));
-    // The web page for everything that is not the API or the webhook. "Not the webhook" is decided on the DECODED, slash-collapsed, lower-cased
-    // path, so //webhook/x, /Webhook/x and /webhook%2Fx can never be answered with a 200 page.
-    app.get(/^\/.*/, (req, res) => {
-      const decoded = safeDecode(req.path).replace(/\/{2,}/g, '/').toLowerCase();
-      if (/^\/(api|webhook)(\/|$)/.test(decoded)) return res.status(404).json({ error: 'not_found' });
-      return res.sendFile(path.join(WEB_DIST, 'index.html'));
-    });
-  }
+  // The web page. `webDir` is where the built UI lives (npm run build puts it in web/dist). The server works without it: with NO build present the API
+  // and the webhook are unaffected and every other path answers 404 with a short JSON explanation, never a crash or a stack trace.
+  const built = fs.existsSync(path.join(webDir, 'index.html'));
+  if (built) app.use(express.static(webDir));
+  // "Not the webhook" is decided on the DECODED, slash-collapsed, lower-cased path, so //webhook/x, /Webhook/x and /webhook%2Fx can never be
+  // answered with a 200 page.
+  app.get(/^\/.*/, (req, res) => {
+    const decoded = safeDecode(req.path).replace(/\/{2,}/g, '/').toLowerCase();
+    if (/^\/(api|webhook)(\/|$)/.test(decoded)) return res.status(404).json({ error: 'not_found' });
+    if (!built) return res.status(404).json({ error: 'web_not_built', detail: 'The web UI has not been built. Run `npm run build` (the API, the webhook and /api/health work without it).' });
+    return res.sendFile(path.join(webDir, 'index.html'));
+  });
   app.flushStore = () => store.flush();
   app.stopSinks = () => { stopRealSink(); };
   return app;

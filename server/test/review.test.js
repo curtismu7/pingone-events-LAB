@@ -9,7 +9,7 @@ import { CSP } from '../src/app.js';
 import { hostedFrom, hostedProblems, sinkFrom, trustProxyHops, uiAuthFrom, webhookAuthFrom } from '../src/config.js';
 import { isBlockedTargetHost } from '../src/safety.js';
 import { runChecks } from '../src/doctor.js';
-import { activity, basic, ENV_ID, CLIENT_ID, fakeFetch, jsonRes, post, rawHttp, tmpDir, waitFor, withServer } from './helpers.js';
+import { activity, basic, ENV_ID, CLIENT_ID, WEB_FIXTURE, fakeFetch, jsonRes, post, rawHttp, tmpDir, waitFor, withServer } from './helpers.js';
 
 const HW = 'webhook-credential-1234'; const HU = 'page-credential-5678';
 const HOSTED = { PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'pingone', WEBHOOK_BASIC_PASSWORD: HW, UI_BASIC_USER: 'viewer', UI_BASIC_PASSWORD: HU, WEBHOOK_ALLOWED_HOSTS: 'hook.example', MODE: 'real' };
@@ -252,7 +252,8 @@ test('12. doubled-slash and encoded variants of the webhook and API paths are ne
       }
     }
     assert.equal((await rawHttp(`${url}//webhook/pingone`, { method: 'HEAD' })).status, 404);
-    assert.equal((await fetch(`${url}/some/client/route`)).status, 200, 'real client routes still get the page');
+    const page = await fetch(`${url}/some/client/route`);
+    assert.equal(page.status, 200, 'real client routes still get the page'); assert.match(await page.text(), /<title>fixture<\/title>/);
   });
 });
 test('12. trailing-slash, upper-case path and lower-case Basic scheme behave exactly like the exact URL (200 or 401, never a misleading 401/403/404)', async () => {
@@ -345,4 +346,37 @@ test('14. the doctor fails when a diagram file holds an undefined {{token}}', as
   const t = checks.find((c) => c.id === 'story-tokens'); assert.equal(t.level, 'fail'); assert.match(t.detail, /castNope/);
   assert.equal(checks.find((c) => c.id === 'verticals').level, 'fail');
   assert.equal((await runChecks()).find((c) => c.id === 'story-tokens').level, 'pass');
+});
+
+// ---- the web build is optional: a fresh clone has no web/dist --------------------------------------------------------------------------
+test('with NO web build the server starts, the API and the webhook work, and every other path answers a clear 404 JSON (never a crash, an HTML stack, or a 200)', async () => {
+  const empty = tmpDir(); // a directory with no index.html
+  for (const webDir of ['/nonexistent/web/dist', empty]) {
+    await withServer(async (url) => {
+      const h = await (await fetch(`${url}/api/health`)).json(); assert.deepEqual([h.schema, h.state], ['demo-health/1', 'ready']);
+      assert.equal((await fetch(`${url}/api/info`)).status, 200);
+      assert.equal((await hook(url, [activity(1)])).status, 200, 'the receiver does not need the UI');
+      for (const p of ['/', '/index.html', '/some/client/route', '/assets/app.js']) {
+        const r = await fetch(`${url}${p}`);
+        assert.equal(r.status, 404, p); assert.match(r.headers.get('content-type'), /json/, p);
+        const j = await r.json(); assert.equal(j.error, 'web_not_built'); assert.match(j.detail, /npm run build/);
+        assert.ok(!/at .*\.js|Error:|<html/i.test(JSON.stringify(j)), 'no stack trace and no HTML');
+        assert.equal(r.headers.get('x-frame-options'), 'DENY', 'the hardening headers are there without a build too');
+      }
+      assert.deepEqual(await (await fetch(`${url}/api/nope`)).json(), { error: 'not_found' });
+      assert.equal((await fetch(`${url}/webhook/nope`)).status, 404);
+      assert.equal((await fetch(`${url}//webhook/pingone`, { method: 'HEAD' })).status, 404);
+    }, { webDir });
+  }
+});
+test('with a web build: static files are served, an unknown route gets index.html, and a traversal out of the web dir is refused', async () => {
+  await withServer(async (url) => {
+    assert.equal(await (await fetch(`${url}/assets/app.js`)).text(), 'console.log("fixture");');
+    assert.match(await (await fetch(`${url}/anything/else`)).text(), /fixture/);
+    for (const p of ['/../package.json', '/%2e%2e/package.json', '/assets/../../package.json', '/..%2fpackage.json']) {
+      const r = await rawHttp(`${url}${p}`);
+      assert.ok(!/"name"\s*:\s*"@?pingone-events/.test(r.text), `${p} must not leak a file outside the web dir`);
+    }
+  });
+  assert.ok(fs.existsSync(path.join(WEB_FIXTURE, 'index.html')));
 });

@@ -23,7 +23,8 @@ COPY server/diagrams server/diagrams
 COPY docs/elasticsearch-index-template.json docs/elasticsearch-index-template.json
 COPY --from=build /app/web/dist web/dist
 # The event store lives here (the compose file mounts a named volume; the SE manifests mount a volume claim). Owned by the unprivileged user.
-RUN mkdir -p /data && chown node:node /data
+# Files copied from a build context keep that machine's modes (git does not record them): make everything readable by the unprivileged user.
+RUN chmod -R a+rX /app && mkdir -p /data && chown node:node /data
 ENV PEV_DATA_DIR=/data
 USER node
 EXPOSE 7802

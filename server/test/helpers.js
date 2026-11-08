@@ -6,6 +6,15 @@ import { createApp, startHttpServer } from '../src/app.js';
 import { createHealth } from '../src/health.js';
 import { createEventStore } from '../src/eventStore.js';
 
+// A tiny web build for the tests: they must not depend on `npm run build` having been run (a fresh clone has no web/dist).
+export const WEB_FIXTURE = (() => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pev-web-'));
+  fs.mkdirSync(path.join(dir, 'assets'));
+  fs.writeFileSync(path.join(dir, 'index.html'), '<!doctype html><html><head><title>fixture</title></head><body><div id="root"></div></body></html>');
+  fs.writeFileSync(path.join(dir, 'assets', 'app.js'), 'console.log("fixture");');
+  return dir;
+})();
+
 export const ENV_ID = '00000000-0000-4000-8000-0000000000e1';
 export const CLIENT_ID = '00000000-0000-4000-8000-0000000000c1';
 
@@ -14,7 +23,7 @@ export const CLIENT_ID = '00000000-0000-4000-8000-0000000000c1';
 export async function withServer(fn, { configFile = '/nonexistent/customer.config.json', env = {}, now, ...extra } = {}) {
   const health = createHealth({ intervalMs: 3_600_000 });
   await health.ready;
-  const app = createApp({ health, configFile, env, realStore: extra.realStore || createEventStore({ max: 100 }), ...(now ? { now } : {}), ...extra });
+  const app = createApp({ health, configFile, env, realStore: extra.realStore || createEventStore({ max: 100 }), webDir: WEB_FIXTURE, ...(now ? { now } : {}), ...extra });
   const { server, url } = await startHttpServer({ port: 0, host: '127.0.0.1', app });
   try { await fn(url.replace(/\/$/, ''), app); } finally { health.stop(); await new Promise((r) => server.close(r)); }
 }
