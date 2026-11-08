@@ -330,7 +330,19 @@ test('writes are same-origin: a cross-origin write is refused even with the page
 });
 
 // ---- 14: doctor says Node >= 26 --------------------------------------------------------------------------------------------------------
-test('14. the doctor requires Node 26 (the engine this app is built and tested on)', async () => {
+test('14. the doctor requires Node 26: the threshold is tested on versions either side of it', async () => {
+  const { nodeCheck, MIN_NODE } = await import('../src/doctor.js');
+  assert.equal(MIN_NODE, 26);
+  for (const v of ['26.0.0', '26.8.2', '27.1.0', '30.0.0']) assert.equal(nodeCheck(v).level, 'pass', v);
+  for (const v of ['25.9.9', '24.0.0', '22.5.0', '20.20.2', '18.0.0', '0.12.0', 'x.y']) assert.equal(nodeCheck(v).level, 'fail', v);
+  assert.match(nodeCheck('20.0.0').detail, /need >= 26/);
   const node = (await runChecks()).find((c) => c.id === 'node');
-  assert.match(node.detail, /need >= 26/); assert.equal(node.level, Number(process.versions.node.split('.')[0]) >= 26 ? 'pass' : 'fail');
+  assert.equal(node.level, nodeCheck().level);
+});
+test('14. the doctor fails when a diagram file holds an undefined {{token}}', async () => {
+  const { rawDiagram } = await import('../src/diagramData.js');
+  const checks = await runChecks({ diagrams: [{ ...rawDiagram('event-pipeline'), lede: 'Hello {{castNope}}' }] });
+  const t = checks.find((c) => c.id === 'story-tokens'); assert.equal(t.level, 'fail'); assert.match(t.detail, /castNope/);
+  assert.equal(checks.find((c) => c.id === 'verticals').level, 'fail');
+  assert.equal((await runChecks()).find((c) => c.id === 'story-tokens').level, 'pass');
 });
