@@ -5,7 +5,7 @@ import { installNetguard } from './netguard.js';
 import { startHttpServer, createApp } from './app.js';
 import { allPassed, runChecks } from './doctor.js';
 import { assertBindAllowed, bindHost, resolvePort } from './safety.js';
-import { modeFrom, pingoneFrom, realAvailableFrom, sinkFrom } from './config.js';
+import { forwardOnStart, modeFrom, pingoneFrom, realAvailableFrom, sinkFrom } from './config.js';
 
 installNetguard(); // before anything else can open a socket
 
@@ -25,6 +25,6 @@ const host = assertBindAllowed(bindHost(), process.env);
 const app = createApp();
 const { url, server } = await startHttpServer({ port: resolvePort(), host, app });
 const real = realAvailableFrom();
-console.log(`[pingone-events-lab] lab at ${url} (${real ? `Real configured: pull ${pingoneFrom() ? 'on' : 'off'}, forwarding target ${sinkFrom() ? 'set (switched OFF)' : 'not set'}` : 'Mock only, no outbound network'})`);
+console.log(`[pingone-events-lab] lab at ${url} (${real ? `Real configured: pull ${pingoneFrom() ? 'on' : 'off'}, forwarding target ${sinkFrom() ? (forwardOnStart() ? 'set (starts ON: FORWARD_ON_START)' : 'set (switched OFF)') : 'not set'}` : 'Mock only, no outbound network'})`);
 console.log(`[pingone-events-lab] health: ${url}api/health`);
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { app.flushStore(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 2000).unref(); });

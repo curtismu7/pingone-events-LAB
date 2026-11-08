@@ -61,6 +61,8 @@ export function sinkProblemFrom(env = process.env) {
 // What the API may say about the target: never a credential.
 export const sinkPublic = (cfg) => (cfg ? { host: cfg.host, origin: cfg.origin, index: cfg.index } : null);
 
+// A hosted deployment whose owner set FORWARD_ON_START=1 and has the cluster configured starts with forwarding ON; everything else starts OFF.
+export const forwardOnStart = (env = process.env) => hostedFrom(env) && env.FORWARD_ON_START === '1' && Boolean(sinkFrom(env));
 export const realAvailableFrom = (env = process.env) => pingoneFrom(env) !== null || webhookFrom(env) !== null;
 export function realProblemFrom(env = process.env) {
   if (realAvailableFrom(env)) return null;

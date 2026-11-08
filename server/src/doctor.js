@@ -4,7 +4,7 @@ import { assertBindAllowed, bindHost, portProblem, scanHosts, scanKeys, webhookH
 import { netguardSelfTest } from './netguard.js';
 import { DEFAULT_CAST, VERTICALS, unfilled } from './cast.js';
 import { buildStory, rawStory } from './story.js';
-import { hostedFrom, hostedProblems, modeFrom, pingoneFrom, pullProblemFrom, realAvailableFrom, sinkFrom, sinkProblemFrom, webhookFrom } from './config.js';
+import { forwardOnStart, hostedFrom, hostedProblems, modeFrom, pingoneFrom, pullProblemFrom, realAvailableFrom, sinkFrom, sinkProblemFrom, webhookFrom } from './config.js';
 import { DIAGRAM_NAMES, buildDiagram, rawDiagram } from './diagramData.js';
 import { MOCK_SCENARIO_IDS, handWritten, scenarioActivities } from './mockEvents.js';
 import { parseDelivery } from './eventParser.js';
@@ -96,7 +96,7 @@ export async function runChecks({ env = process.env, cast = DEFAULT_CAST, diagra
   const hp = hostedProblems(env);
   add('hosted', hp.length ? 'fail' : (hostedFrom(env) ? 'pass' : 'info'), hp.length ? `hosted deployment cannot start: ${hp.join('; ')}` : (hostedFrom(env) ? 'hosted: the webhook credential and the page credential are both set (fail-closed otherwise)' : 'not hosted: loopback only, no credentials required'));
   add('pull-config', 'info', pingoneFrom(env) ? 'the read-only PingOne pull is configured (owner-run, never automatic)' : pullProblemFrom(env));
-  add('sink-config', env.ELASTICSEARCH_URL && !sinkFrom(env) ? 'fail' : 'info', sinkFrom(env) ? 'forwarding target configured (switched OFF until the owner turns it on)' : (sinkProblemFrom(env) || ''));
+  add('sink-config', env.ELASTICSEARCH_URL && !sinkFrom(env) ? 'fail' : 'info', sinkFrom(env) ? (forwardOnStart(env) ? 'forwarding target configured; this hosted deployment starts with forwarding ON (FORWARD_ON_START)' : 'forwarding target configured (switched OFF until the owner turns it on)') : (sinkProblemFrom(env) || ''));
 
   const ng = await netguardSelfTest();
   add('netguard', ng.ok ? 'pass' : 'fail', ng.ok ? `blocked fetch, socket, socket-by-IP, dns lookup, dns resolve and udp to a non-loopback host (${ng.blocked}/6)` : ng.detail);
