@@ -283,3 +283,34 @@ button[aria-pressed="true"] {
   color: var(--text);
 }
 .shell-theme select { min-height: 32px; padding: 4px 8px; }
+
+/* ===== Evidence lanes (owner-approved 2026-11-08; mock: customer-agent-LAB sequence and movie reel pages) =====
+   One colour per actor lane in the sequence view and movie reel, from AI-DEMO2's SequenceReelDiagram hue
+   families (browser blue, agent orange, tool/gateway green, identity amber, back-end pink; no purple).
+   Used on borders, strokes and tile rings only, never as text colour. Apps use var(--lane-*) and add no literals. */
+:root {
+  --lane-browser: #2a78d6; --lane-page: #5f98df; --lane-hitl: #5f98df;
+  --lane-agent: #eb6834; --lane-a2a: #f1946d;
+  --lane-mcp: #1baf7a; --lane-gateway: #5fc8a1; --lane-privilege: #13805a; --lane-credentials: #8fd7bc;
+  --lane-idp: #eda100; --lane-mcp-as: #f2bd4d; --lane-authorize: #f2bd4d;
+  --lane-bff: #e87ba4; --lane-registry: #efa3c0; --lane-lab: var(--muted); --lane-neutral: var(--muted);
+  --lane-llm: color-mix(in oklab, #eb6834 60%, white); --lane-api: color-mix(in oklab, #e87ba4 55%, white); --lane-database: color-mix(in oklab, #e87ba4 30%, white);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --lane-browser: #4a9eff; --lane-page: #7db8ff; --lane-hitl: #7db8ff;
+    --lane-agent: #ff6b4a; --lane-a2a: #ff9a80;
+    --lane-mcp: #2ed9a3; --lane-gateway: #6ee3bd; --lane-privilege: #3fcf94; --lane-credentials: #97ead0;
+    --lane-idp: #ffa500; --lane-mcp-as: #ffc04d; --lane-authorize: #ffc04d;
+    --lane-bff: #ff5599; --lane-registry: #ff88bb;
+    --lane-llm: color-mix(in oklab, #ff6b4a 80%, white); --lane-api: color-mix(in oklab, #ff5599 75%, white); --lane-database: color-mix(in oklab, #ff5599 55%, white);
+  }
+}
+:root[data-theme="dark"] {
+  --lane-browser: #4a9eff; --lane-page: #7db8ff; --lane-hitl: #7db8ff;
+  --lane-agent: #ff6b4a; --lane-a2a: #ff9a80;
+  --lane-mcp: #2ed9a3; --lane-gateway: #6ee3bd; --lane-privilege: #3fcf94; --lane-credentials: #97ead0;
+  --lane-idp: #ffa500; --lane-mcp-as: #ffc04d; --lane-authorize: #ffc04d;
+  --lane-bff: #ff5599; --lane-registry: #ff88bb;
+  --lane-llm: color-mix(in oklab, #ff6b4a 80%, white); --lane-api: color-mix(in oklab, #ff5599 75%, white); --lane-database: color-mix(in oklab, #ff5599 55%, white);
+}
