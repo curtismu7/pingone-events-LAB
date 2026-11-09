@@ -1,6 +1,9 @@
-# PingOne Events Lab
+# PingOne Events LAB
 
-**Tier: Demo.** Standalone app (local Docker on OrbStack, port 7803) that shows what PingOne tells you about itself through a webhook subscription, how to tell whether the webhook is really working, and how to forward each event to your own Elasticsearch or OpenSearch so Kibana can chart it.
+Tier: Demo.
+Repo: https://github.com/curtismu7/pingone-events-LAB
+
+Standalone app (local Docker on OrbStack, port 7803) that shows what PingOne tells you about itself through a webhook subscription, how to tell whether the webhook is really working, and how to forward each event to your own Elasticsearch or OpenSearch so Kibana can chart it.
 
 It is the standalone version of the PingOne events page in AI-DEMO2 (read-only source; nothing is imported). Scaffold copied from observability-LAB (shell, safety, netguard, workspaces, story and diagram plumbing); the events, receiver, delivery health, sink and hosting are new. Catalog id D124 is provisional until the owner confirms it.
 
@@ -26,6 +29,37 @@ npm run reset                         # Reset a running app's default workspace 
 Mock needs nothing. Real settings come from the shared settings file (`~/Development/.env`; `STANDALONE_ENV` overrides): `PINGONE_ENVIRONMENT_ID`, `PINGONE_REGION`, `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET` for the pull, `ELASTICSEARCH_URL` plus `ELASTICSEARCH_API_KEY` (or user and password) for forwarding. Real is on by default only when configured, and the header toggle switches back and forth at runtime.
 
 Run locally, the app cannot receive PingOne deliveries (PingOne's cloud cannot reach a laptop). Use Mock to see the whole path, the pull to read delivery health, or the SE deployment for the real thing.
+
+## Run from a clone
+
+Prerequisites: Node 26 or newer. Docker (OrbStack) only for the Docker form. Mock needs no tenant and no credentials.
+
+```
+git clone https://github.com/curtismu7/pingone-events-LAB.git
+cd pingone-events-LAB
+npm ci
+npm run build
+npm run doctor
+npm start
+```
+
+Open http://127.0.0.1:7803/. `GET /api/health` answers `demo-health/1`. Or with Docker: `HOST_PORT=7803 docker compose up --build -d` from the same folder. Inside the container the app listens on 7802; the host port is 7803.
+
+## What to do if the port is taken
+
+```
+Ports: pingone-events-LAB listens on 7803 on the host (7802 inside the container only).
+Docker publishes it on 127.0.0.1:7803 only.
+
+If the port is taken:
+1. Find what is using it:
+   lsof -iTCP:7803 -sTCP:LISTEN -n -P
+2. If it is an old copy of this lab (npm start), stop that process: kill <PID>.
+   If it is this lab's container: docker compose down (from this folder).
+3. If it is something else, stop it. The lab refuses any other port on purpose
+   (one port per app; npm run doctor says so), so free 7803 rather than moving the lab.
+4. Then start again: npm start, or docker compose up -d.
+```
 
 ## SE deployment (hosted)
 Manifests, a Secret template and `k8s/deploy.sh` are in [k8s/](k8s/); see [k8s/README.md](k8s/README.md). Build only: nothing here deploys itself, pushes an image or touches a cluster. PingOne's destination is `https://<se-host>/webhook/pingone-events` with Basic authentication; the page is on its own host behind a separate password.
