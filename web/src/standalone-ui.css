@@ -25,6 +25,8 @@
   --focus: #12538d;
   --danger-text: #aa0005;
   --accent-gradient: linear-gradient(90deg, #d20e0f 55%, #aa0005);
+  --accent-inactive: #636b74;        /* disabled primary: neutral grey, white label 5.4:1 */
+  --accent-inactive-gradient: linear-gradient(90deg, #636b74 55%, #565e66);
   --status-ok: #1d7a43;              /* semantic green: status dots */
   --on-accent-border: rgba(255, 255, 255, 0.35); /* thin border or spinner ring drawn on the accent */
   --primary-edge: transparent;       /* edge of button.primary; dark themes set it so the deep red end meets 3:1 */
@@ -79,6 +81,8 @@
   --focus: #fcfcfc;
   --danger-text: #fca5a5;
   --status-ok: #7fd1a0;
+  --accent-inactive: #6e7681;        /* disabled primary: neutral grey; 4.59:1 vs the light surface, 3.77:1 boundary vs the dark */
+  --accent-inactive-gradient: linear-gradient(90deg, #6e7681 55%, #636b74);
 }
 
 * {
@@ -159,9 +163,12 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* A disabled primary keeps its label readable: white text on the faded red stays at 4.5:1 or more. */
+/* A disabled primary is neutral grey (not a faded red): the white label stays 4.5:1+ on every stop, light and dark,
+   and the shared --accent-inactive* tokens read as "not ready", not "wrong". */
 button.primary:disabled {
-  opacity: 0.88;
+  background: var(--accent-inactive-gradient);
+  border-color: var(--accent-inactive);
+  opacity: 1;
 }
 
 /* Primary action: the Ping Red gradient, white text. Add class="primary". */
@@ -181,6 +188,13 @@ button[aria-pressed="true"] {
 
 :focus-visible {
   outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The dark shell bar sits on --box-dark: the shared --focus ring is too faint on it
+   (2.29:1 in the light theme), so inside the bar the ring uses --on-box. */
+.shell-bar :focus-visible {
+  outline: 3px solid var(--on-box);
   outline-offset: 2px;
 }
 
