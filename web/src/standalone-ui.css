@@ -94,7 +94,7 @@ body {
   background: var(--bg-lab);
   color: var(--text-body);
   font-family: var(--font-primary);
-  font-size: 14px;
+  font-size: 0.875rem;  /* 14px at the default root; scales with the TopMenu Text size control */
   line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -124,7 +124,7 @@ pre,
   border-radius: 8px;
   background: var(--surface-2);
   color: var(--text);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* Live mode: the banner edge changes colour so a live page never looks simulated. */
@@ -201,7 +201,7 @@ button[aria-pressed="true"] {
 /* Phone width: no horizontal scroll. Layout grids drop to one column. */
 @media (max-width: 600px) {
   body {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
 }
 
@@ -241,7 +241,7 @@ button[aria-pressed="true"] {
   border-radius: 4px;
   background: var(--surface);
   color: var(--text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -249,7 +249,7 @@ button[aria-pressed="true"] {
   border-left-width: var(--dg-stripe);
 }
 .dg-node strong { font-weight: 700; }
-.dg-node span { font-size: 12px; overflow-wrap: anywhere; color: var(--text-body); }
+.dg-node span { font-size: 0.75rem; overflow-wrap: anywhere; color: var(--text-body); }
 .dg-node.hot { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .dg-dark  { border-left-color: var(--dg-dark); }
 .dg-blue  { border-left-color: var(--dg-blue); }
@@ -292,7 +292,7 @@ button[aria-pressed="true"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text);
 }
