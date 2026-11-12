@@ -2,7 +2,7 @@ import React from "react";
 
 /**
  * TopMenu: the standardized right side of the shell bar for every -LAB app.
- * Owner-approved layout (2026-11-11): three right-aligned control rows, brand + nav on
+ * Owner-approved layout (2026-11-12): two right-aligned control rows, brand + nav on
  * the top line at the left; Sign in stands alone in a centered slot on the top line.
  * Owner-approved order, each control prop-gated — a lab that does not
  * need one simply omits the prop and it renders nothing; the order of the rest
@@ -12,15 +12,9 @@ import React from "react";
  *   2. vertical  industry selector (where the lab has verticals)
  *   3. theme     Light / Dark / Auto dropdown
  *   4. fontSize  S / M / L dropdown + A- / A+ steppers (percent-based root font size)
- *   5. present      presenter-mode toggle (where the lab has it)
- *   6. talkTrack    talk-track/script toggle (owner 2026-11-11: kept separate from Present
- *                   even where Present shows the script; render only where a script exists)
- *   7. shelf        ShelfLink back to the demo shelf (rendered by the app or via shelfUrl)
- *   8. help         link to the lab's documentation (where the lab has docs)
- *   9. version      About/version button (from the lab's VERSION file)
- *   10. reset       Reset action
- *   11. signIn      Sign in/out — the bar's one primary; shows when `showSignIn` is true
- *                   (pass `real && needsAuth`) plus an optional signed-in display
+ *   Row 1: mode, vertical, present, talkTrack, shelf, help, version, reset
+ *   Row 2: theme (Light/Dark/Auto), fontSize (S/M/L + A-/A+)
+ *   Sign in: stands alone in a centered slot on the top line (top-menu__signin-slot)
  *   +  extra        lab-specific controls ride at the end with the same chrome
  *
  * State (theme, fontSize) lives in the app; TopMenu is controlled, so tests keep
@@ -117,14 +111,11 @@ export default function TopMenu({
             {present.active ? "Exit present (Esc)" : (present.label || "Present (P)")}
           </button>
         )}
-      </span>
-      {/* row 2 */}
-      <span className="top-menu__row">
-      {talkTrack && (
-        <button type="button" aria-pressed={talkTrack.active} data-testid="talk-track-toggle" title="Show the presenter script alongside the page" onClick={talkTrack.onToggle}>
-          Talk track
-        </button>
-      )}
+        {talkTrack && (
+          <button type="button" aria-pressed={talkTrack.active} data-testid="talk-track-toggle" title="Show the presenter script alongside the page" onClick={talkTrack.onToggle}>
+            Talk track
+          </button>
+        )}
         {shelfUrl && (
           <a className="top-menu__shelf" href={shelfUrl} target="_blank" rel="noreferrer" title="Open the demo shelf (launcher)" data-testid="shelf-link">
             Shelf
@@ -142,7 +133,7 @@ export default function TopMenu({
           <button type="button" data-testid="reset" onClick={onReset}>Reset</button>
         )}
       </span>
-      {/* row 3: theme + text size */}
+      {/* row 2: theme + text size */}
       <span className="top-menu__row">
         {theme && (
           <label className="top-menu__ctl top-menu__theme">
