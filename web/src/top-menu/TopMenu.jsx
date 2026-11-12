@@ -90,6 +90,7 @@ export default function TopMenu({
               <option value="mock">Mock</option>
               <option
                 value="real"
+                data-testid="mode-real"
                 disabled={mode.realAvailable === false}
                 title={mode.realAvailable === false ? (mode.realHint || "Real is not configured. Mock keeps working.") : undefined}
               >
@@ -117,7 +118,7 @@ export default function TopMenu({
           </button>
         )}
         {shelfUrl && (
-          <a className="top-menu__shelf" href={shelfUrl} target="_blank" rel="noreferrer" title="Open the demo shelf (launcher)" data-testid="shelf-link">
+          <a className="top-menu__shelf top-menu__shelf--accent" href={shelfUrl} target="_blank" rel="noreferrer" title="Open the demo shelf (launcher)" data-testid="shelf-link">
             Shelf
           </a>
         )}
@@ -132,6 +133,8 @@ export default function TopMenu({
         {onReset && (
           <button type="button" data-testid="reset" onClick={onReset}>Reset</button>
         )}
+        {extra && <span className="top-menu__extra">{extra}</span>}
+        {children}
       </span>
       {/* row 2: theme + text size */}
       <span className="top-menu__row">
@@ -162,8 +165,6 @@ export default function TopMenu({
           </>
         )}
       </span>
-      {extra && <span className="top-menu__extra">{extra}</span>}
-      {children}
     </span>
   );
 }

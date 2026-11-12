@@ -48,6 +48,19 @@
   border-color: var(--on-box);
 }
 
+/* Shelf stands out: Ping-red, with the arrow glyph it carries in JSX */
+.top-menu a.top-menu__shelf--accent {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent-deep, var(--accent));
+  font-weight: 700;
+}
+
+.top-menu a.top-menu__shelf--accent:hover {
+  background: var(--accent-deep, var(--accent));
+  border-color: var(--on-accent);
+}
+
 .top-menu button[aria-pressed="true"] {
   background: var(--accent);
   color: var(--on-accent);
@@ -130,3 +143,15 @@
   align-items: center;
   gap: 0.4rem;
 }
+
+/* Lab-provided ShelfLink (children) gets the same red accent as the built-in Shelf link */
+.top-menu a.shelf-link,
+.shell-bar a.shelf-link,
+a.shelf-link {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid var(--accent-deep, var(--accent));
+  font-weight: 700;
+}
+a.shelf-link::after { content: " \2197"; }
+a.shelf-link:hover { background: var(--accent-deep, var(--accent)); border-color: var(--on-accent); }
