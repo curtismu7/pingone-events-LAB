@@ -266,6 +266,7 @@ export function createApp({
     const sinkCfg = sinkFrom(env);
     res.json({
       mode, source: mode, simulated: mode === 'mock', hosted, realAvailable: realAvailableFrom(env), realHint: realAvailableFrom(env) ? null : realProblemFrom(env),
+      version: (() => { try { return JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version || null; } catch { return null; } })(),
       pull: { available: Boolean(pingoneFrom(env)), hint: pullProblemFrom(env) },
       webhook: { paths: WEBHOOK_PATHS, publicHostConfigured: Boolean(webhookFrom(env)), credentialConfigured: Boolean(webhookAuth) },
       sink: { configured: Boolean(sinkCfg), hint: sinkCfg ? null : sinkProblemFrom(env), target: sinkPublic(sinkCfg) },

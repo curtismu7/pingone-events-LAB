@@ -79,35 +79,35 @@ describe("shell and rule 19 toggle", () => {
     expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("aria-current", "page");
   });
 
-  it("the toggle reflects the mode (aria-pressed), switches both ways without a reload, reloads the data, and the banner follows", async () => {
+  it("the mode select reflects the mode, switches both ways without a reload, reloads the data, and the banner follows", async () => {
     await ready();
-    const mock = screen.getByTestId("mode-mock"); const real = screen.getByTestId("mode-real");
-    expect(mock).toHaveAttribute("aria-pressed", "true"); expect(real).toHaveAttribute("aria-pressed", "false");
+    const modeSelect = screen.getByTestId("mode-select");
+    expect(modeSelect).toHaveValue("mock");
     const before = calls.filter((c) => c.url.startsWith("/api/events")).length;
-    await userEvent.click(real);
-    await waitFor(() => expect(screen.getByTestId("mode-real")).toHaveAttribute("aria-pressed", "true"));
+    await userEvent.selectOptions(modeSelect, "real");
+    await waitFor(() => expect(screen.getByTestId("mode-select")).toHaveValue("real"));
     expect(screen.getByTestId("banner")).toHaveTextContent(/^REAL/);
     expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live");
     await waitFor(() => expect(calls.filter((c) => c.url.startsWith("/api/events")).length).toBeGreaterThan(before));
     expect(JSON.parse(calls.filter((c) => c.url === "/api/mode").at(-1).opts.body)).toEqual({ source: "real" });
-    await userEvent.click(screen.getByTestId("mode-mock"));
-    await waitFor(() => expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "true"));
+    await userEvent.selectOptions(screen.getByTestId("mode-select"), "mock");
+    await waitFor(() => expect(screen.getByTestId("mode-select")).toHaveValue("mock"));
     expect(screen.getByTestId("banner")).toHaveTextContent(/^SIMULATED/);
   });
 
   it("Real is disabled with a how-to tooltip when it is not configured", async () => {
     state.realAvailable = false;
     await ready();
-    const real = screen.getByTestId("mode-real");
+    const real = screen.getByTestId("mode-select").querySelector('option[value="real"]');
     expect(real).toBeDisabled(); expect(real).toHaveAttribute("title", expect.stringContaining("Real needs the PingOne settings"));
   });
 
   it("a 409 from the server leaves the mode alone and shows why", async () => {
     await ready();
-    state.realAvailable = false; // the button was enabled when rendered; the server now refuses
-    await userEvent.click(screen.getByTestId("mode-real"));
+    state.realAvailable = false; // the option was enabled when rendered; the server now refuses
+    await userEvent.selectOptions(screen.getByTestId("mode-select"), "real");
     expect(await screen.findByTestId("notice")).toHaveTextContent("Real needs the PingOne settings");
-    expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("mode-select")).toHaveValue("mock");
   });
 
   it("the banner stays visible on every tab, and says SIMULATED when the server cannot be read", async () => {
@@ -355,9 +355,9 @@ describe("setup, pipeline, talk track, presenter", () => {
   });
   it("the theme control sets data-theme and remembers it", async () => {
     await ready();
-    await userEvent.selectOptions(screen.getByTestId("theme"), "dark");
+    await userEvent.selectOptions(screen.getByTestId("theme-select"), "dark");
     expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
-    await userEvent.selectOptions(screen.getByTestId("theme"), "auto");
+    await userEvent.selectOptions(screen.getByTestId("theme-select"), "auto");
     expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
   });
 });

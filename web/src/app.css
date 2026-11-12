@@ -69,7 +69,7 @@ details { margin: 6px 0; } summary { cursor: pointer; font-size: var(--font-size
 .app--presenter .json, .app--presenter .tbl { font-size: var(--font-size-base); }
 /* ===== 1. App shell (pattern P1): colours come from tokens only ===== */
 [hidden] { display: none; }
-.shell-bar { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; padding: 0.65rem 1.25rem; background: var(--box-dark); color: var(--on-box); border-bottom: 3px solid transparent; border-image: var(--accent-gradient) 1; margin: 0 -16px; }
+.shell-bar { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; padding: 0.65rem 1.25rem; background: var(--box-dark); color: var(--on-box); border-bottom: 3px solid transparent; border-image: var(--accent-gradient) 1; margin: 0 -16px;  position: relative; }
 .shell-brand { display: inline-flex; align-items: center; gap: 0.6rem; font-weight: 700; letter-spacing: 0.02em; }
 .shell-logo { width: 1.9rem; height: 1.9rem; border-radius: 4px; }
 .shell-nav { display: flex; gap: 0.25rem; flex: 1; flex-wrap: wrap; }

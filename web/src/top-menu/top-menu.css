@@ -1,0 +1,130 @@
+/*
+  top-menu.css: styles for the shared TopMenu component.
+  Canonical copy lives in AI-DEMO-Standalone/shared/top-menu/. Each app vendors an
+  identical copy into web/src/top-menu/ (check with scripts/check-top-menu.sh).
+  Colours come only from the standalone-ui.css tokens. Layout only, no new colours.
+*/
+
+/* All controls in the bar are one uniform height. */
+.top-menu__ctl,
+.top-menu button,
+.top-menu select,
+.top-menu a.top-menu__shelf {
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.top-menu__ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--on-box);
+  opacity: 0.9;
+}
+
+.top-menu button,
+.top-menu select,
+.top-menu a.top-menu__shelf {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0 0.7rem;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--on-box);
+  border: 1px solid var(--on-accent-border, rgba(252, 252, 252, 0.55));
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.top-menu button:hover,
+.top-menu select:hover,
+.top-menu a.top-menu__shelf:hover {
+  border-color: var(--on-box);
+}
+
+.top-menu button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+.top-menu button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.top-menu select {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.top-menu .top-menu__theme select {
+  min-width: 5.5rem;
+}
+
+/* Mock/Real stands out: accent-filled select. */
+.top-menu select.top-menu__mode {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent-deep, var(--accent));
+  font-weight: 700;
+}
+
+.top-menu select.top-menu__mode:hover {
+  border-color: var(--on-accent);
+}
+
+.top-menu select.top-menu__mode option {
+  color: var(--text);
+  background: var(--surface);
+}
+
+/* The one primary in the bar: Sign in. */
+.top-menu button.top-menu__signin {
+  background: var(--accent-gradient);
+  color: var(--on-accent);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+/* Lab-specific controls ride the same bar with the same chrome. */
+.top-menu .top-menu__extra {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Owner-approved layout (2026-11-11): three right-aligned rows; the app's shell-bar
+   keeps brand + nav on the top line at the left. */
+.top-menu {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.top-menu__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Sign in stands alone: centered on the bar's top line. The slot is absolutely
+   positioned to the nearest positioned ancestor, so the app's shell-bar must set
+   `position: relative`. The slot renders first in DOM, positions independently. */
+.top-menu__signin-slot {
+  position: absolute;
+  left: 50%;
+  top: 0.65rem;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}

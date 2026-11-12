@@ -5,8 +5,8 @@ import Forward from "./components/Forward";
 import Setup from "./components/Setup";
 import DiagramTab from "./components/DiagramTab";
 import TalkTrack from "./components/TalkTrack";
+import TopMenu, { applyFontSize } from "./top-menu/TopMenu";
 import { getJson, resetWorkspace, setMode } from "./api";
-import ShelfLink from "./components/ShelfLink";
 
 export const TABS = [
   { id: "events", label: "Events" },
@@ -40,6 +40,7 @@ export default function App() {
   const [dataSignal, setDataSignal] = useState(0); // bump = every panel reloads its data
   const [notice, setNotice] = useState("");
   const [theme, setTheme] = useState(savedTheme);
+  const [fontStep, setFontStep] = useState(() => { try { const f = window.localStorage.getItem("pev.font"); return ["S", "M", "L"].includes(f) ? f : "M"; } catch { return "M"; } });
   const bump = useCallback(() => setDataSignal((n) => n + 1), []);
 
   const loadInfo = useCallback(() => getJson("/api/info").then(setInfo, () => setInfo(null)), []);
@@ -55,6 +56,10 @@ export default function App() {
     if (theme === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", theme);
     try { window.localStorage.setItem("pev.theme", theme); } catch { /* storage blocked */ }
   }, [theme]);
+  useEffect(() => {
+    applyFontSize(fontStep);
+    try { window.localStorage.setItem("pev.font", fontStep); } catch { /* storage blocked */ }
+  }, [fontStep]);
   const select = useCallback((id) => { setTab(id); setRequested(null); try { window.history.replaceState(null, "", `#${id}`); } catch { /* ignore */ } }, []);
   const pickScenario = useCallback((sid) => { try { window.history.replaceState(null, "", `#scenario-${sid}`); } catch { /* ignore */ } }, []);
 
@@ -93,18 +98,17 @@ export default function App() {
           {TABS.map((t) => <a key={t.id} id={`tab-${t.id}`} href={`#${t.id}`} aria-current={tab === t.id ? "page" : undefined} onClick={(e) => { e.preventDefault(); select(t.id); }}>{t.label}</a>)}
         </nav>
         <span className="shell-right">
-          <ShelfLink />
-          {info && (
-            <span className="seg" role="group" aria-label="Data source" data-testid="mode-toggle">
-              <button type="button" aria-pressed={!real} data-testid="mode-mock" onClick={() => switchTo("mock")}>Mock</button>
-              <button type="button" aria-pressed={real} data-testid="mode-real" disabled={!info.realAvailable && !real}
-                title={info.realAvailable ? "Show real events: delivered by PingOne, or pulled read-only" : info.realHint || "Real is not configured. Mock keeps working."}
-                onClick={() => switchTo("real")}>Real</button>
-            </span>
-          )}
-          <button type="button" onClick={reset} data-testid="reset">Reset</button>
-          <button type="button" aria-pressed={presenter} onClick={() => setPresenter((v) => !v)} data-testid="presenter">{presenter ? "Exit presenter (Esc)" : "Presenter (P)"}</button>
-          <label className="shell-theme">Theme <select value={theme} onChange={(e) => setTheme(e.target.value)} data-testid="theme" aria-label="Theme">{THEMES.map((t) => <option key={t} value={t}>{t}</option>)}</select></label>
+          <TopMenu
+            mode={{ value: info?.mode === "real" ? "real" : "mock", onChange: switchTo, realAvailable: info ? info.realAvailable : null, realHint: info?.realHint }}
+            vertical={{ value: vertical, onChange: setVertical, options: story ? story.verticals : ["retail"] }}
+            theme={{ value: theme, onChange: setTheme }}
+            fontSize={{ value: fontStep, onChange: setFontStep }}
+            present={{ active: presenter, onToggle: () => setPresenter((v) => !v) }}
+            talkTrack={{ active: tab === "talk", onToggle: () => select("talk") }}
+            help={{ href: "https://github.com/curtismu7/pingone-events-LAB#readme" }}
+            version={info?.version || null}
+            onReset={reset}
+          />
         </span>
       </header>
       <main>
