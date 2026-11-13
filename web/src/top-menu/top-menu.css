@@ -20,8 +20,8 @@
   gap: 0.35rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--on-box);
-  opacity: 0.9;
+  /* Same theme-aware text as the control fill: black on light, white on dark (owner, 2026-11-13). */
+  color: var(--tm-ctl-fg);
 }
 
 .top-menu button,
@@ -31,10 +31,11 @@
   font-size: 0.85rem;
   padding: 0 0.7rem;
   border-radius: 8px;
-  background: transparent;
-  color: var(--on-box);
-  /* --on-accent-border is defined by the vendored standalone-ui.css; no literal fallback (P10/T1) */
-  border: 1px solid var(--on-accent-border);
+  /* Grey fill + strong border so the controls read on any header, light or dark (owner, 2026-11-13).
+     Light: light grey fill, near-black border and text. Dark: dark grey fill, white border and text. */
+  background: var(--tm-ctl-bg);
+  color: var(--tm-ctl-fg);
+  border: 1px solid var(--tm-ctl-border);
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
@@ -42,10 +43,31 @@
   gap: 0.35rem;
 }
 
+/* Control chrome tokens: the dark block mirrors the family pattern in standalone-ui.css
+   (dark follows the system setting unless data-theme is set). */
+.top-menu {
+  --tm-ctl-bg: #d9d9d9;
+  --tm-ctl-fg: #111;
+  --tm-ctl-border: #111;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .top-menu {
+    --tm-ctl-bg: #2a2d35;
+    --tm-ctl-fg: #fcfcfc;
+    --tm-ctl-border: #fcfcfc;
+  }
+}
+:root[data-theme="dark"] .top-menu {
+  --tm-ctl-bg: #2a2d35;
+  --tm-ctl-fg: #fcfcfc;
+  --tm-ctl-border: #fcfcfc;
+}
+
 .top-menu button:hover,
 .top-menu select:hover,
 .top-menu a.top-menu__shelf:hover {
-  border-color: var(--on-box);
+  border-color: var(--tm-ctl-fg);
+  filter: brightness(1.08);
 }
 
 /* Shelf stands out: Ping-red (fixed brand red, NOT the lab's remapped --accent), with the arrow from ::after */
