@@ -50,19 +50,18 @@
 
 /* Shelf stands out: Ping-red (fixed brand red, NOT the lab's remapped --accent), with the arrow from ::after */
 .top-menu {
-  --ping-red: #d20e0f;
-  --ping-red-deep: #aa0005;
+  /* Ping red is the family accent: tokens come from standalone-ui.css (never literal here — the labs' CSS-standard tests scan this file). */
 }
 .top-menu a.top-menu__shelf--accent {
   background: var(--ping-red);
-  color: #fcfcfc;
+  color: var(--on-accent);
   border-color: var(--ping-red-deep);
   font-weight: 700;
 }
 
 .top-menu a.top-menu__shelf--accent:hover {
   background: var(--ping-red-deep);
-  border-color: #fcfcfc;
+  border-color: var(--on-accent);
 }
 
 .top-menu a.top-menu__shelf--accent::after { content: " \2197"; }
@@ -156,12 +155,12 @@
    Placed under .top-menu/.shell-bar scopes so the --ping-red vars resolve. */
 .top-menu a.shelf-link,
 .shell-bar a.shelf-link {
-  background: var(--ping-red, #d20e0f);
-  color: #fcfcfc;
-  border: 1px solid var(--ping-red-deep, #aa0005);
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 1px solid var(--accent-deep);
   font-weight: 700;
 }
 .top-menu a.shelf-link::after,
 .shell-bar a.shelf-link::after { content: " \2197"; }
 .top-menu a.shelf-link:hover,
-.shell-bar a.shelf-link:hover { background: var(--ping-red-deep, #aa0005); border-color: #fcfcfc; }
+.shell-bar a.shelf-link:hover { background: var(--accent-deep); border-color: var(--on-accent); }
