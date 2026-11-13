@@ -50,17 +50,18 @@
 
 /* Shelf stands out: Ping-red (fixed brand red, NOT the lab's remapped --accent), with the arrow from ::after */
 .top-menu {
-  /* Ping red is the family accent: tokens come from standalone-ui.css (never literal here — the labs' CSS-standard tests scan this file). */
+  /* Ping red comes from the family tokens in standalone-ui.css (--accent/--accent-deep/--on-accent);
+     literals here would fail the labs' CSS-standard tests, which scan this vendored file. */
 }
 .top-menu a.top-menu__shelf--accent {
-  background: var(--ping-red);
+  background: var(--accent);
   color: var(--on-accent);
-  border-color: var(--ping-red-deep);
+  border-color: var(--accent-deep);
   font-weight: 700;
 }
 
 .top-menu a.top-menu__shelf--accent:hover {
-  background: var(--ping-red-deep);
+  background: var(--accent-deep);
   border-color: var(--on-accent);
 }
 
