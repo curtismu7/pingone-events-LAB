@@ -328,3 +328,224 @@ button[aria-pressed="true"] {
   --lane-bff: #ff5599; --lane-registry: #ff88bb;
   --lane-llm: color-mix(in oklab, #ff6b4a 80%, white); --lane-api: color-mix(in oklab, #ff5599 75%, white); --lane-database: color-mix(in oklab, #ff5599 55%, white);
 }
+
+
+/* ===== Shared component blocks (owner, 2026-11-13, standard §8d.2) =====
+   The .pill / .chip / .story / .presenter-say / .mode-toggle families repeated verbatim across the labs;
+   these canonical copies come from the most complete lab (hostile-a2a). A lab may drop its private copies
+   as it migrates; until then, the lab's own rules simply win the cascade (same specificity, later file).
+   Reference: shared/STANDALONE-UI-PATTERNS.md — "shared means change it once and every app gets it."
+*/
+
+.pill {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-left: 0.25rem;
+}
+
+.badges .pill {
+  margin-left: 0;
+}
+
+.pill.yes {
+  border-color: var(--status-ok);
+  color: var(--status-ok);
+}
+
+.pill.partial, .pill.hold {
+  border-color: var(--status-warn);
+  color: var(--status-warn);
+}
+
+.pill.no {
+  border-color: var(--danger-text);
+  color: var(--danger-text);
+}
+
+/* Talk track, adapted from the kit */
+.story {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.story__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.story__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--danger-text);
+}
+
+.story__title {
+  margin: 0.15rem 0 0;
+  font-size: 1.1rem;
+}
+
+.story__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin: 0.6rem 0;
+}
+
+.story__field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.story__summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.story__steps {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.story__step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+}
+
+.is-current > .story__step {
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+.story__n {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.75rem;
+}
+
+.story__step[aria-pressed="true"] .story__n {
+  background: var(--on-accent);
+  color: var(--accent);
+}
+
+.story__tag {
+  margin-left: auto;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--status-warn);
+  color: var(--status-warn);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.story__body {
+  margin: 0.4rem 0 0.4rem 2rem;
+  font-size: 0.9rem;
+}
+
+.story__body p {
+  margin: 0.3rem 0;
+}
+
+.story__say {
+  padding: 0.4rem 0.7rem;
+  border-left: 4px solid var(--accent);
+  background: var(--surface-2);
+  border-radius: 0 6px 6px 0;
+}
+
+.story__why {
+  color: var(--muted);
+}
+
+.story__proof {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
+.story__takeaway {
+  margin: 0.4rem 0 0;
+  font-weight: 700;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0 0.3em;
+  border: 1px solid var(--danger-text);
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--danger-text);
+  font: 0.8em var(--font-mono);
+}
+
+.story__body {
+  margin-left: 0.25rem;
+}
+
+.story__summary, .poison dl, .hashes, .kv {
+  grid-template-columns: 1fr;
+}
+
+.mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.mode-toggle button {
+  border: 0;
+  border-radius: 0;
+  padding: 3px 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: default;
+}
+
+.mode-toggle button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+.mode-toggle button:disabled {
+  opacity: 0.6;
+}
+
+.mode-toggle button:focus-visible {
+  outline-offset: -3px;
+}
