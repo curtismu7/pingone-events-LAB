@@ -20,7 +20,7 @@ export default function Setup({ story }) {
         </dl>
         <h3>The same thing through the Management API</h3>
         <p><code>{w.managementApi.method} {w.managementApi.url}</code></p>
-        <Json value={w.managementApi.body} label="Subscription request body (placeholders)" testId="mgmt-body" />
+        <Json value={w.managementApi.body} label="Subscription request body (placeholders)" testId="mgmt-body" hot={["httpEndpoint", "filterOptions", "includedActionTypes"]} />
         <p className="muted" data-testid="mgmt-note">{w.managementApi.note}</p>
         <h3>Safety</h3>
         <p>{w.safety}</p>
@@ -37,7 +37,7 @@ export default function Setup({ story }) {
         <h2>Elasticsearch / OpenSearch and Kibana</h2>
         <p>{es.why}</p>
         <Json value={es.indexTemplateCurl} label="curl command for the index template (placeholders)" testId="curl" />
-        {setup?.indexTemplate && <><p className="muted">{es.indexTemplateFile}:</p><Json value={setup.indexTemplate} label="Index template" testId="template" /></>}
+        {setup?.indexTemplate && <><p className="muted">{es.indexTemplateFile}:</p><Json value={setup.indexTemplate} label="Index template" testId="template" hot={["index_patterns", "dynamic", "eventId"]} /></>}
         <h3>In Kibana (or OpenSearch Dashboards)</h3>
         <ol>{es.kibana.map((k) => <li key={k}>{visible(k)}</li>)}</ol>
       </section>

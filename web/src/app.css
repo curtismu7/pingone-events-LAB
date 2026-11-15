@@ -40,7 +40,7 @@ label.inline { display: inline-flex; margin-top: 0; font-weight: 400; }
 .seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .seg button[aria-pressed="true"] { border-color: var(--th-accent); font-weight: 700; box-shadow: inset 0 -3px 0 var(--th-accent); }
 .lesson { margin: 10px 0 0; line-height: 1.5; }
-.json { margin: 4px 0; padding: 10px; background: var(--th-bg-inset); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: var(--font-size-sm); overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.json { margin: 4px 0; padding: 10px; background: var(--th-bg-inset); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: var(--font-size-sm); white-space: pre-wrap; overflow-wrap: anywhere; }
 .tag { display: inline-block; padding: 1px 8px; border-radius: var(--radius-pill); border: 1px solid var(--th-border-strong); background: var(--th-bg-inset); font-size: var(--font-size-2xs); font-weight: 600; }
 .tag--ok { color: var(--status-ok); background: var(--th-bg-card); border-color: var(--status-ok); }
 .tag--warn { color: var(--status-warn); background: var(--th-bg-card); border-color: var(--status-warn); }
@@ -140,8 +140,6 @@ input[type="text"]:focus-visible, input[type="checkbox"]:focus-visible { outline
 .chip--danger { color: var(--danger-text); border-color: var(--danger-text); }
 .turn { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
 .setup ol { padding-left: 20px; line-height: 1.5; font-size: var(--font-size-sm); }
-.setup .json { max-height: 22rem; }
-.json { max-height: 24rem; overflow: auto; }
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
 .seg button[aria-pressed="true"] { border-color: var(--th-accent); }
 button:disabled { opacity: 0.6; cursor: not-allowed; border-style: dashed; }

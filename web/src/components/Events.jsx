@@ -133,7 +133,7 @@ export default function Events({ story, info, dataSignal, requestedId, onSelect,
                             {[["Event id", e.eventId], ["Time", e.timestamp], ["Actor", `${e.actorType || "none"} ${e.actorId}`], ["Status", e.status || "none"], ["Resource", e.resource || "none"], ["Environment", e.environmentId || "none"], ["Correlation id", e.correlationId || "none"], ["Arrived via", e.via], ["Schema", e.schema]].map(([k, v]) => (<div key={k} className="kv__row"><dt>{k}</dt><dd><code>{visible(v)}</code></dd></div>))}
                           </dl>
                           <h3>Raw event</h3>
-                          <Json value={e.raw} label="The original event as delivered" testId="raw-json" />
+                          <Json value={e.raw} label="The original event as delivered" testId="raw-json" hot={["action", "type", "result", "status", "actors", "correlationId"]} />
                         </aside>
                       </td>
                     </tr>
