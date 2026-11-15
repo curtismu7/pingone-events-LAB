@@ -27,6 +27,14 @@ let view = readPref(KEY, (v) => v === "form" || v === "raw", "form");
 const subs = new Set();
 const setView = (v) => { view = v; writePref(KEY, v); subs.forEach((f) => f()); };
 export const setJsonView = setView; // for tests: the choice is module state, shared by every pane
+// A lab that teaches the wire format can open on JSON instead of Form: call setDefaultJsonView("raw") once in main.jsx, before rendering.
+// A visitor's own saved choice still wins; with none saved, this is the default.
+export function setDefaultJsonView(v) {
+  if (v !== "form" && v !== "raw") return;
+  let saved = null;
+  try { saved = window.localStorage.getItem(KEY); } catch { /* no storage: the default applies */ }
+  if (saved !== "form" && saved !== "raw") { view = v; subs.forEach((f) => f()); }
+}
 const useView = () => useSyncExternalStore((f) => { subs.add(f); return () => subs.delete(f); }, () => view, () => "form");
 
 const JWT = /^eyJ[\w-]{4,}\.[\w-]{4,}\.[\w-]*$/;
@@ -51,17 +59,19 @@ export function parseJsonText(s) {
 
 // An HTTP transcript with a JSON body (a hop's request or response: request / status line, headers, blank line, body): the head stays text,
 // the body gets its own Form | JSON pane. Anything that is not clearly that shape is left alone (a string stays text).
-const WIRE_START = /^(?:[A-Z]{3,7} \S+ HTTP\/\d(?:\.\d)?|HTTP\/\d(?:\.\d)?\s+\d{3}|HTTP\s+\d{3})/;
+const WIRE_START = /^(?:(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) \S+(?: HTTP\/\d(?:\.\d)?)?\s*$|HTTP\/\d(?:\.\d)?\s+\d{3}|HTTP\s+\d{3})/m;
 export function splitWire(s) {
   if (typeof s !== "string") return undefined;
   const m = /\r?\n\r?\n/.exec(s);
   if (!m) return undefined;
   const head = s.slice(0, m.index);
   const body = s.slice(m.index + m[0].length);
-  if (!WIRE_START.test(head)) return undefined;
+  if (!WIRE_START.test(head.split(/\r?\n/)[0])) return undefined;
   return parseJsonText(body) !== undefined ? { head, body } : undefined;
 }
 
+const MAX_PANE_CHARS = 150000; // above this a pane is plain text
+const MAX_FORM_DEPTH = 60; // deeper than this the Form view shows the rest as text
 const prim = (v) => v === null || typeof v !== "object";
 // An object, or a list of objects, goes UNDER its label at full width (a deep payload must not spend a label column per level); scalars and chip lists stay beside it.
 const nestedValue = (v) => !prim(v) && !(Array.isArray(v) && v.every(prim));
@@ -107,6 +117,12 @@ function scan(text) {
       i = j + 1;
       continue;
     }
+    if (/\s/.test(ch)) { // whitespace is its own token, so the value after `"key": ` is seen as a value (a number, true, false, null), not swallowed as plain text
+      let j = i; while (j < text.length && /\s/.test(text[j])) j += 1;
+      out.push({ kind: "plain", text: text.slice(i, j) });
+      i = j;
+      continue;
+    }
     if (/[-0-9]/.test(ch)) {
       let j = i; while (j < text.length && /[-0-9.eE+]/.test(text[j])) j += 1;
       out.push({ kind: "number", text: text.slice(i, j) });
@@ -150,7 +166,9 @@ function Value({ v, k, hot }) {
   if (kind === "token") return <span className="jform__v jform__v--token"><Jwt text={v} /></span>;
   if (typeof v === "string" && SPLIT.has(k) && /\s/.test(v.trim())) return <ChipList items={v.trim().split(/\s+/)} k={k} hot={hot} />;
   if (kind === "time") { const d = typeof v === "number" ? date(v) : null; return <span className="jform__v jform__v--time">{visible(String(v))}{d && <span className="jform__sub"> {d}</span>}</span>; }
-  return <span className={`jform__v jform__v--${kind}`}>{visible(String(v))}</span>;
+  // A string that would read as another type (the text "{}", "[]", "5", "true", "null") keeps its quotes, so the Form view never hides string-versus-object.
+  const typed = typeof v === "string" && /^(?:\{[\s\S]*\}|\[[\s\S]*\]|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null)$/.test(v.trim());
+  return <span className={`jform__v jform__v--${kind}`}>{visible(typed ? JSON.stringify(v) : String(v))}</span>;
 }
 
 function ChipList({ items, k, hot }) {
@@ -159,6 +177,7 @@ function ChipList({ items, k, hot }) {
 }
 
 function Form({ value, hot, k = "", depth = 0 }) {
+  if (depth > MAX_FORM_DEPTH) return <span className="jform__v">{visible(JSON.stringify(value))}</span>;
   if (Array.isArray(value)) {
     if (value.every(prim)) return <ChipList items={value} k={k} hot={hot} />;
     return (
@@ -205,6 +224,14 @@ export function Json({ value: given, label, testId, toggle = true, hot }) {
   // A string is shown EXACTLY as given in the JSON view (a hashed or signed payload must not be re-serialized: key order, number text, spacing).
   // The Form view reads the parsed value. Only a value that is an object or array is laid out with JSON.stringify.
   const text = typeof value === "string" ? value : isJson ? JSON.stringify(data, null, 2) : JSON.stringify(value);
+  // Safety: a very large payload is shown as plain text (no colouring, no form) so a page can never freeze on it.
+  if (text.length > MAX_PANE_CHARS) {
+    return (
+      <div className="jsonbox" data-testid={testId ? `${testId}-box` : undefined} data-view="text">
+        <pre className="json json--raw" tabIndex={0} aria-label={label} data-testid={testId}>{visible(text)}</pre>
+      </div>
+    );
+  }
   const asForm = isJson && mode === "form";
   return (
     <div className="jsonbox" data-testid={testId ? `${testId}-box` : undefined} data-view={isJson ? mode : "text"}>

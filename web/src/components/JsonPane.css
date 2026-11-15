@@ -8,7 +8,7 @@
 /* ===== JSON pane (owner 2026-11-14): Form = a form, JSON = coloured by what each part is. Colours come from the theme tokens only. ===== */
 .json, .facts, .http { --j-key: var(--status-info); --j-string: var(--status-ok); --j-number: color-mix(in srgb, var(--status-warn) 50%, var(--danger-text)); --j-bool: var(--status-warn); --j-null: var(--muted); --j-punct: var(--muted); --j-url: color-mix(in srgb, var(--status-info) 55%, var(--status-ok)); --j-id: color-mix(in srgb, var(--status-ok) 60%, var(--text)); --j-time: color-mix(in srgb, var(--status-warn) 55%, var(--text)); --j-hot-bg: var(--accent-soft); }
 /* FULL VIEW (owner 2026-11-14, Rule 24): a JSON pane is never a scroll box. It grows to its content, long lines and tokens wrap, and a lab's own
-   max-height / overflow does not cap it (specificity, no !important: the family CSS check forbids it; the J1 check fails such a rule in the lab's CSS). */
+   max-height / overflow does not cap it (done with selector specificity, not a forced override, because the family CSS check forbids those; the J1 check fails such a rule in the lab's CSS). */
 .jsonbox, .jsonbox .json.json { max-height: none; height: auto; overflow: visible; }
 .jwire { display: grid; gap: 4px; min-width: 0; }
 .jwire > .json.json--wirehead { max-height: none; height: auto; overflow: visible; margin: 0; }
