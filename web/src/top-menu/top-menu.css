@@ -24,6 +24,12 @@
   color: var(--text);
 }
 
+/* Inside the standard shell-bar the background is --box-dark in BOTH themes, so the
+   theme-aware --text above is dark-on-dark in the light theme. Labels there use --on-box. */
+.shell-bar .top-menu__ctl {
+  color: var(--on-box);
+}
+
 .top-menu button,
 .top-menu select,
 .top-menu a.top-menu__shelf {
