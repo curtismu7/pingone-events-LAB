@@ -135,7 +135,9 @@ describe("events", () => {
     expect(calls.at(-1).url).toContain("eventType=SESSION");
     await userEvent.click(screen.getByRole("button", { name: "Open SESSION.UPDATED" }));
     const detail = await screen.findByTestId("event-detail");
-    expect(within(detail).getByTestId("raw-json")).toHaveTextContent('"type": "FLOW.CREATED"');
+    // Rule 24: the pane defaults to Formatted; switch to Raw for the exact JSON text
+    await userEvent.click(screen.getByTestId("raw-json-raw"));
+    expect(within(detail).getByTestId("raw-json")).toHaveTextContent('"FLOW.CREATED"');
     await userEvent.click(screen.getByTestId("close-detail"));
     expect(screen.queryByTestId("event-detail")).toBeNull();
   });
