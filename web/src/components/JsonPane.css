@@ -1,0 +1,59 @@
+/* ===== JSON viewer: coloured tokens + Form | JSON toggle ===== */
+.jsonbox { position: relative; min-width: 0; }
+.jsonbox__toggle { display: flex; justify-content: flex-end; gap: 0; margin: 0 0 4px; }
+.jsonbox__toggle button { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 0; min-height: 0; background: var(--surface); color: var(--muted); }
+.jsonbox__toggle button:first-child { border-radius: 6px 0 0 6px; }
+.jsonbox__toggle button:last-child { border-radius: 0 6px 6px 0; }
+.jsonbox__toggle button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+/* ===== JSON pane (owner 2026-11-14): Form = a form, JSON = coloured by what each part is. Colours come from the theme tokens only. ===== */
+.json, .facts, .http { --j-key: var(--status-info); --j-string: var(--status-ok); --j-number: color-mix(in srgb, var(--status-warn) 50%, var(--danger-text)); --j-bool: var(--status-warn); --j-null: var(--muted); --j-punct: var(--muted); --j-url: color-mix(in srgb, var(--status-info) 55%, var(--status-ok)); --j-id: color-mix(in srgb, var(--status-ok) 60%, var(--text)); --j-time: color-mix(in srgb, var(--status-warn) 55%, var(--text)); --j-hot-bg: var(--accent-soft); }
+/* FULL VIEW (owner 2026-11-14, Rule 24): a JSON pane is never a scroll box. It grows to its content, long lines and tokens wrap, and a lab's own
+   max-height / overflow does not cap it (specificity, no !important: the family CSS check forbids it; the J1 check fails such a rule in the lab's CSS). */
+.jsonbox, .jsonbox .json.json { max-height: none; height: auto; overflow: visible; }
+.jwire { display: grid; gap: 4px; min-width: 0; }
+.jwire > .json.json--wirehead { max-height: none; height: auto; overflow: visible; margin: 0; }
+.json--raw { color: var(--text-body); white-space: pre-wrap; overflow-wrap: anywhere; }
+.jtok--key { color: var(--j-key); font-weight: 600; }
+.jtok--string { color: var(--j-string); }
+.jtok--number { color: var(--j-number); }
+.jtok--bool { color: var(--j-bool); font-weight: 600; }
+.jtok--null { color: var(--j-null); font-weight: 600; }
+.jtok--punct { color: var(--j-punct); }
+.jtok--url { color: var(--j-url); text-decoration: underline; text-decoration-style: dotted; }
+.jtok--id { color: var(--j-id); }
+.jtok--time { color: var(--j-time); font-weight: 600; }
+.jtok--hot { color: var(--text); background: var(--j-hot-bg); font-weight: 700; border-radius: 3px; }
+.jtok--alert { color: var(--danger-text); font-weight: 700; }
+.jtok--plain { color: var(--text-body); }
+.jtok--jwt1 { color: var(--danger-text); }
+.jtok--jwt2 { color: var(--status-warn); }
+.jtok--jwt3 { color: var(--status-info); }
+.json--form { white-space: normal; font-family: inherit; font-size: 13px; padding: 8px; }
+.jform { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.jform[data-depth="1"], .jform[data-depth="2"], .jform[data-depth="3"] { padding-left: 10px; border-left: 2px solid var(--border); }
+.jform__row { display: grid; grid-template-columns: minmax(84px, 28%) minmax(0, 1fr); gap: 4px 10px; align-items: start; }
+.jform__k { margin: 0; padding-top: 3px; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--j-key); overflow-wrap: anywhere; }
+.jform__d { margin: 0; min-width: 0; }
+.jform__row[data-nested="true"] { grid-template-columns: minmax(0, 1fr); }
+.jform__v { display: block; padding: 2px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
+.jform__v--string { color: var(--j-string); }
+.jform__v--number { color: var(--j-number); }
+.jform__v--url { color: var(--j-url); }
+.jform__v--id { color: var(--j-id); }
+.jform__v--time { color: var(--j-time); }
+.jform__v--null { color: var(--j-null); }
+.jform__sub { color: var(--muted); }
+.jform__chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.jform__chip { display: inline-block; max-width: 100%; overflow-wrap: anywhere; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-family: var(--font-mono); font-size: 12px; color: var(--j-string); }
+.jform__chip[data-on="true"] { border-color: var(--status-ok); color: var(--status-ok); font-weight: 700; }
+.jform__chip[data-on="false"] { border-color: var(--status-warn); color: var(--status-warn); font-weight: 700; }
+.jform__chips[data-hot="true"] .jform__chip { border-color: var(--accent); background: var(--j-hot-bg); color: var(--text); font-weight: 700; }
+/* IMPORTANT keys (HOT, or a lab's own `hot` list) and error / decision keys stand out in the form: a tinted row with an accent edge. */
+.jform__row[data-hot="true"] { background: var(--j-hot-bg); border-left: 3px solid var(--accent); border-radius: 4px; padding: 2px 4px 2px 6px; }
+.jform__row[data-hot="true"] > .jform__k { color: var(--text); }
+.jform__row[data-hot="true"] > .jform__d > .jform__v { font-weight: 700; color: var(--text); }
+.jform__row[data-alert="true"] { border-left: 3px solid var(--danger-text); border-radius: 4px; padding: 2px 4px 2px 6px; }
+.jform__row[data-alert="true"] > .jform__k, .jform__row[data-alert="true"] > .jform__d > .jform__v { color: var(--danger-text); font-weight: 700; }
+@media (max-width: 480px) { .jform__row { grid-template-columns: minmax(0, 1fr); } }
+.jform__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.jform__idx { display: inline-block; margin-bottom: 4px; padding: 0 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--muted); }

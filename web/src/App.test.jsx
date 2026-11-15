@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App, { BANNER_UNKNOWN } from "./App";
 import { labelOffsets } from "./components/PatternDiagram";
+import { setJsonView } from "./components/JsonPane";
 
 const STORY = {
   title: "t", intro: "intro text", banner: "SIMULATED: synthetic PingOne events", realBanner: "REAL: events PingOne delivered", verticals: ["retail", "health"], cast: { castClientId: "orders-agent" },
@@ -64,7 +65,7 @@ function mockFetch() {
     return json({}, 404);
   });
 }
-beforeEach(() => { override = {}; mockFetch(); window.location.hash = ""; });
+beforeEach(() => { override = {}; mockFetch(); setJsonView("raw"); window.location.hash = ""; });
 const ready = async () => { render(<App />); await screen.findByText("Follow one sign-in"); await screen.findByTestId("events-table"); };
 const nav = (name) => userEvent.click(screen.getByRole("link", { name }));
 
@@ -137,6 +138,18 @@ describe("events", () => {
     expect(within(detail).getByTestId("raw-json")).toHaveTextContent('"type": "FLOW.CREATED"');
     await userEvent.click(screen.getByTestId("close-detail"));
     expect(screen.queryByTestId("event-detail")).toBeNull();
+  });
+
+  it("the raw event is a JSON pane with a Form | JSON toggle, never a scroll box", async () => {
+    await ready();
+    await userEvent.click(screen.getByRole("button", { name: "Open SESSION.UPDATED" }));
+    const box = within(await screen.findByTestId("event-detail")).getByTestId("raw-json-box");
+    expect(within(box).getByRole("button", { name: "Form" })).toBeInTheDocument();
+    expect(within(box).getByRole("button", { name: "JSON" })).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(within(box).getByRole("button", { name: "Form" }));
+    expect(within(box).getByTestId("raw-json")).toHaveTextContent("FLOW.CREATED");
+    expect(within(box).getByTestId("raw-json").querySelector("[data-hot='true']")).not.toBeNull();
+    setJsonView("raw");
   });
 
   it("clicking anywhere on a table row opens its detail right under that row, and clicking the row again closes it", async () => {
