@@ -5,6 +5,7 @@ import Forward from "./components/Forward";
 import Setup from "./components/Setup";
 import DiagramTab from "./components/DiagramTab";
 import TalkTrack from "./components/TalkTrack";
+import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu";
 import { getJson, resetWorkspace, setMode } from "./api";
 
@@ -108,7 +109,9 @@ export default function App() {
             help={{ href: "https://github.com/curtismu7/pingone-events-LAB#readme" }}
             version={info?.version || null}
             onReset={reset}
-          />
+          >
+            <VerifyMark id="pingone-events-lab" />
+          </TopMenu>
         </span>
       </header>
       <main>
