@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import ReleaseNotes from "./ReleaseNotes.jsx";
 
 /**
  * TopMenu: the standardized right side of the shell bar for every -LAB app.
@@ -33,6 +34,8 @@ import React from "react";
  *                    With href: a link that opens in a new tab. Without href: a button that calls onClick
  *                    (default: go to #readme). label defaults to "Help", title to "Open this lab's documentation"
  *   version         string — About/version button label (e.g. "v1.4.2", from the lab's VERSION file); omit when unknown
+ *   onVersion       fn — what the version button does when clicked. Omit it and the button opens the shared
+ *                     release-notes dialog (ReleaseNotes.jsx) by itself; a lab-specific action replaces that
  *   onReset          fn; when given renders the Reset button
  *   showSignIn       bool — true only when Real mode is active and the lab needs auth
  *   signedIn         { subject, onSignIn, onSignOut } — when signed in shows "Signed in as <subject>" + Sign out
@@ -55,6 +58,7 @@ export default function TopMenu({
   shelfUrl,
   help,
   version,
+  onVersion,
   onReset,
   showSignIn = false,
   signedIn,
@@ -63,6 +67,10 @@ export default function TopMenu({
 }) {
   const themeValue = theme?.value ?? "auto";
   const fontValue = fontSize?.value ?? "M";
+  // Rule (owner, 2026-11-17): the version button never does nothing. With onVersion the lab decides
+  // what the click does; without it the button opens the shared release-notes dialog itself.
+  const [notesOpen, setNotesOpen] = useState(false);
+  const onVersionClick = onVersion || (() => setNotesOpen(true));
   return (
     <span className="top-menu shell-right" data-testid="top-menu">
       {/* Sign in stands alone: the app shell centers this slot on the bar's top line */}
@@ -137,7 +145,7 @@ export default function TopMenu({
             </button>
           ))}
         {version && (
-          <button type="button" data-testid="version" title="About this lab">{version}</button>
+          <button type="button" data-testid="version" title="About this lab" onClick={onVersionClick}>{version}</button>
         )}
         {onReset && (
           <button type="button" data-testid="reset" onClick={onReset}>Reset</button>
@@ -174,6 +182,7 @@ export default function TopMenu({
           </>
         )}
       </span>
+      {!onVersion && notesOpen && <ReleaseNotes version={version || ""} onClose={() => setNotesOpen(false)} />}
     </span>
   );
 }

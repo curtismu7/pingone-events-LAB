@@ -173,3 +173,11 @@
 .shell-bar a.shelf-link::after { content: " \2197"; }
 .top-menu a.shelf-link:hover,
 .shell-bar a.shelf-link:hover { background: var(--accent-deep); border-color: var(--on-accent); }
+
+/* Release notes dialog (what the version button opens when the lab passes no onVersion). */
+.rn-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgb(0 0 0 / 0.45); }
+.rn-dialog { width: min(34rem, calc(100vw - 2rem)); max-height: min(80vh, 40rem); overflow: auto; border: 1px solid var(--border, #ccc); border-radius: 10px; padding: 1.25rem 1.5rem; background: var(--surface, #fff); color: var(--text, #111); }
+.rn-dialog h2 { margin-top: 0; }
+.rn-dialog ul { padding-left: 1.2rem; }
+.rn-dialog li { margin: 0.4rem 0; }
+.rn-dialog code { overflow-wrap: anywhere; }
