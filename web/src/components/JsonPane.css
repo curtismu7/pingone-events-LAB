@@ -32,6 +32,10 @@
 .jform { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
 .jform[data-depth="1"], .jform[data-depth="2"], .jform[data-depth="3"] { padding-left: 10px; border-left: 2px solid var(--border); }
 .jform__row { display: grid; grid-template-columns: minmax(84px, 28%) minmax(0, 1fr); gap: 4px 10px; align-items: start; }
+/* Narrow containers (deeply nested rows, half-width panes): let the key column shrink below 84px
+   instead of poking the row out of the pane and scrolling the page sideways (owner, 2026-11-17). */
+.jform__row { grid-template-columns: fit-content(84px) minmax(0, 1fr); }
+.jform[data-depth] .jform__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); }
 .jform__k { margin: 0; padding-top: 3px; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--j-key); overflow-wrap: anywhere; }
 .jform__d { margin: 0; min-width: 0; }
 .jform__row[data-nested="true"] { grid-template-columns: minmax(0, 1fr); }
@@ -57,3 +61,9 @@
 @media (max-width: 480px) { .jform__row { grid-template-columns: minmax(0, 1fr); } }
 .jform__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .jform__idx { display: inline-block; margin-bottom: 4px; padding: 0 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--muted); }
+/* ===== Decoded tokens (Rule 24b, owner 2026-11-18): Header / Payload / Signature under the pane, jwt.io order. Theme tokens only. ===== */
+.jdec { display: grid; gap: 8px; min-width: 0; }
+.jdec__h { margin: 8px 0 2px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.jdec__card { margin: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); display: grid; gap: 2px; min-width: 0; }
+.jdec__name { margin: 0 0 4px; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+.jdec__none { margin: 0; font-size: 12px; color: var(--muted); font-style: italic; }
