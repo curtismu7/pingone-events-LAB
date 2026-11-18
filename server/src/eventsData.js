@@ -95,7 +95,7 @@ export const SETUP = {
     local: 'Run locally, this app cannot receive PingOne deliveries: PingOne\'s cloud cannot reach a laptop, and nothing is exposed from it. Mock shows the whole path; Real locally can still pull, read-only, and forward to your cluster.',
   },
   settings: [
-    ['Real pull (read-only)', 'PINGONE_ENVIRONMENT_ID, PINGONE_REGION, PINGONE_CLIENT_ID, PINGONE_CLIENT_SECRET (a worker app that can read subscriptions and activities)'],
+    ['Real pull (read-only)', 'PINGONE_ENVIRONMENT_ID, PINGONE_REGION, PINGONE_WORKER_CLIENT_ID, PINGONE_WORKER_CLIENT_SECRET (a worker app that can read subscriptions and activities; the names scripts/pingone-setup.sh writes, the older PINGONE_CLIENT_ID / PINGONE_CLIENT_SECRET still work)'],
     ['Public webhook host', 'WEBHOOK_ALLOWED_HOSTS (comma-separated host names PingOne posts to; those hosts may reach the two webhook paths and nothing else)'],
     ['Webhook credential (hosted: required)', 'WEBHOOK_BASIC_USER + WEBHOOK_BASIC_PASSWORD, and/or WEBHOOK_HEADER_NAME + WEBHOOK_HEADER_VALUE (12+ characters)'],
     ['Page credential (hosted: required)', 'UI_BASIC_USER + UI_BASIC_PASSWORD (a different credential from the webhook\'s; the health endpoint stays open for probes)'],
