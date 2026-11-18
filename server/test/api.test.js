@@ -5,7 +5,7 @@ import { SPA_STUB } from '../src/app.js';
 import { activity, ENV_ID, CLIENT_ID, fakeFetch, jsonRes, post, rawHttp, waitFor, withServer } from './helpers.js';
 
 const FAST = { sleep: async () => {}, flushDelayMs: 0 };
-const REAL = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_CLIENT_ID: CLIENT_ID, PINGONE_CLIENT_SECRET: 'a-test-secret-value', PINGONE_REGION: 'eu' };
+const REAL = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_WORKER_CLIENT_ID: CLIENT_ID, PINGONE_WORKER_CLIENT_SECRET: 'a-test-secret-value', PINGONE_REGION: 'eu' };
 const ES = { ELASTICSEARCH_URL: 'https://cluster.example:9200', ELASTICSEARCH_API_KEY: 'test-api-key-value' };
 const hook = (url, body, headers = {}, p = '/webhook/pingone-events') => fetch(`${url}${p}`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
 const json = async (url, p) => (await fetch(`${url}${p}`)).json();
