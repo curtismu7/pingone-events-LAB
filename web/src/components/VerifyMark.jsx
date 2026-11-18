@@ -38,7 +38,7 @@ export default function VerifyMark({ id, path = "/api/shelf", headers, tracepare
   useEffect(() => {
     let alive = true;
     const extra = typeof headers === "function" ? headers() : (headers ?? {});
-    fetch(path, { credentials: "omit", headers: { Accept: "application/json", ...extra, ...(traceparent ? { traceparent: traceparent() } : {}) } })
+    fetch(path, { credentials: "same-origin", headers: { Accept: "application/json", ...extra, ...(traceparent ? { traceparent: traceparent() } : {}) } })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (alive) setMark(d?.demos?.find((x) => x.id === id)?.verification ?? null); })
       .catch(() => { /* no shelf, no mark */ });
