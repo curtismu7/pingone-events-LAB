@@ -31,7 +31,11 @@ textarea { width: 100%; font-family: var(--font-mono); display: block; margin: 4
 select:focus-visible, textarea:focus-visible, summary:focus-visible, pre:focus-visible, [role="tab"]:focus-visible { outline: 2px solid var(--th-status-info); outline-offset: 2px; }
 label { display: block; font-size: var(--font-size-sm); font-weight: 600; margin-top: 6px; }
 label.inline { display: inline-flex; margin-top: 0; font-weight: 400; }
-.gate, .posture { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); align-items: start; }
+.gate, .posture { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: start; }
+.step-num { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent-gradient); color: var(--on-accent); font: 700 var(--font-size-2xs) var(--font-mono);
+  margin-right: 8px; vertical-align: 2px; }
+@media (max-width: 900px) { .gate, .posture { grid-template-columns: 1fr; } }
 .posture > .panel--warn { grid-column: 1 / -1; }
 .panel { border: 1px solid var(--th-border); background: var(--th-bg-card); border-radius: var(--radius-lg); padding: 12px 14px; min-width: 0; }
 .panel h2 { margin: 0 0 8px; font-size: var(--font-size-lg); }
