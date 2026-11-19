@@ -62,7 +62,7 @@ export default function Events({ story, info, dataSignal, requestedId, onSelect,
     <div className="events">
       {!real && story && (
         <section className="panel" aria-label="Scenarios" data-testid="scenarios">
-          <h2>Scenarios</h2>
+          <h2><span className="step-num" aria-hidden="true">1</span>Scenarios</h2>
           <p className="muted">Each one plays or sets up something in Mock. Event scenarios send PingOne-shaped deliveries to this app&apos;s own receiver; the others set up a failure on the Delivery or Forward tab.</p>
           <ul className="scenario-list">
             {story.scenarios.map((sc) => (
@@ -78,14 +78,14 @@ export default function Events({ story, info, dataSignal, requestedId, onSelect,
       )}
       {real && (
         <section className="panel" aria-label="Real events" data-testid="real-note">
-          <h2>Real events</h2>
+          <h2><span className="step-num" aria-hidden="true">2</span>Real events</h2>
           <p className="muted">These are events PingOne delivered to this app and events you pulled read-only. Nothing is generated here. {info?.webhook?.credentialConfigured ? "PingOne’s credential is configured." : "No webhook credential is configured (fine on this machine; PingOne cannot reach it)."} Use the Delivery tab to pull.</p>
         </section>
       )}
 
       <section className="panel" aria-label="Events" data-testid="events-panel">
         <div className="panel__head">
-          <h2>Events <span className="muted" data-testid="count">{result ? `${events.length} shown of ${result.count} stored (${result.source === "real" ? "REAL" : "MOCK"})` : ""}</span></h2>
+          <h2><span className="step-num" aria-hidden="true">3</span>Events <span className="muted" data-testid="count">{result ? `${events.length} shown of ${result.count} stored (${result.source === "real" ? "REAL" : "MOCK"})` : ""}</span></h2>
           <div className="tools">
             {!real && <button type="button" data-testid="send-test" onClick={sendTest}>Send test webhook</button>}
             <label className="inline"><input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} data-testid="auto" /> Auto-refresh</label>
@@ -148,7 +148,7 @@ export default function Events({ story, info, dataSignal, requestedId, onSelect,
 
       {sent && (
         <section className="panel" aria-label="Last test delivery" data-testid="sent">
-          <h2>Last test webhook</h2>
+          <h2><span className="step-num" aria-hidden="true">4</span>Last test webhook</h2>
           <p><strong>The receiver answered</strong> <span className={sent.status === 200 && sent.body ? "chip chip--ok" : "chip chip--danger"} data-testid="sent-status">HTTP {sent.status}</span> <span className="muted">{sent.type.split(";")[0] || "no content type"}</span></p>
           {sent.status === 200 && !sent.body && <p className="field-error" role="alert" data-testid="sent-html">A web page came back instead of the receiver&apos;s answer. PingOne would record this as a success, and the event was not stored.</p>}
           {sent.status === 503 && <p className="field-error" role="alert" data-testid="sent-503">The door is shut (503). PingOne would record a failed delivery; nothing was stored.</p>}
