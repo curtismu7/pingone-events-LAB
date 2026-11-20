@@ -4,6 +4,9 @@
 .pat-node--resource { border-color: var(--th-border-strong); background: var(--th-bg-inset); }
 .pat-node--idp { border-color: var(--th-status-warning); background: var(--th-bg-inset); }
 .pat-node--on { box-shadow: 0 0 0 3px var(--th-accent); }
+/* An expanded box (the kit's .dk-open) is wider so its details fit. */
+.pat-node.dk-open { min-width: 18rem; max-width: 22rem; text-align: left; font-weight: 400; }
+.react-flow__node.dk-open { width: 320px; }
 .pat-handle { opacity: 0; pointer-events: none; }
 .pat-edge path { stroke: var(--th-text-muted); stroke-width: 1.6; }
 .pat-edge--cp path { stroke: var(--th-accent); }
@@ -17,6 +20,3 @@
 .pat-canvas .react-flow__controls-button:hover { background: var(--th-bg-hover); }
 .pat-canvas .react-flow__controls-button svg { fill: currentColor; }
 .pat-canvas .react-flow__background { background: var(--th-bg-card); }
-.pat-elabel { position: absolute; pointer-events: none; padding: 1px 6px; border-radius: var(--radius-sm); border: 1px solid var(--th-border); background: var(--th-bg-card); color: var(--th-text); font-size: 13px; white-space: normal; text-align: center; max-width: 140px; line-height: 1.25; z-index: 5; }
-.pat-elabel--now { border-color: var(--th-status-info); font-weight: 700; }
-.pat-elabel--dim { opacity: 0.55; }
