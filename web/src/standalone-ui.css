@@ -39,6 +39,10 @@
   --box-grey: #3e4f60;
   --box-red: #aa0005;
   --on-box: #fcfcfc;
+  /* phone standard (shared/phone): lock-screen wallpaper, device colours in BOTH themes */
+  --phone-wall-1: #1b2a52;
+  --phone-wall-2: #12506b;
+  --phone-wall-3: #1f6b5a;
   --font-primary: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
