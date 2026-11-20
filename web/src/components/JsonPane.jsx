@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { visible } from "../safeText";
 
 // View preference: a tiny per-lab store (localStorage, best effort). The lab does not need
@@ -199,13 +199,97 @@ function Form({ value, hot, k = "", depth = 0 }) {
         {entries.map(([key, v]) => (
           <div key={key} className="jform__row" data-hot={hot.has(key) ? "true" : undefined} data-alert={ALERT.has(key) ? "true" : undefined} data-nested={nestedValue(v) ? "true" : undefined}>
             <dt className="jform__k">{visible(key)}</dt>
-            <dd className="jform__d">{prim(v) ? <Value v={v} k={key} hot={hot} /> : <Form value={v} hot={hot} k={key} depth={depth + 1} />}</dd>
+            <dd className="jform__d">{prim(v) ? <Value v={v} k={key} hot={hot} /> : <Section value={v} name={key} hot={hot} />}</dd>
           </div>
         ))}
       </dl>
     );
   }
-  return <Value v={v} k={k} />;
+  return <Value v={value} k={k} />;
+}
+
+// ---- Hybrid C+A sections (owner, 2026-11-19): a nested object or array is one collapsed line until opened -------------------------------
+// The section header names the key with its kind and size (object · 3 fields / array · 2 items); opening it
+// reveals ONE flat list of dot-path rows (customer.email, items[0].amount) — no boxes inside boxes. Every
+// existing cue survives: hot keys tint their row, alert keys colour it, chips / tokens / times render as before.
+function Section({ value, name, hot }) {
+  const [open, setOpen] = useState(false);
+  const isArr = Array.isArray(value);
+  const count = isArr ? value.length : Object.keys(value).length;
+  const kindLabel = isArr ? "array" : "object";
+  const noun = isArr ? "items" : "fields";
+  // The one-line preview of a collapsed section: the first scalar leaf, so a common payload (a nested
+  // name, a status) often needs no click at all.
+  const preview = firstLeaf(value);
+  return (
+    <details className="jsec" data-open={open ? "true" : undefined} onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary className="jsec__head">
+        <span className="jsec__caret" aria-hidden="true">{open ? "▾" : "▸"}</span>
+        <span className="jsec__name">{visible(name)}</span>
+        <span className="jsec__meta">{kindLabel} · {count} {count === 1 ? noun.slice(0, -1) : noun}</span>
+      </summary>
+      {preview !== undefined && !open && <span className="jsec__preview"><Value v={preview.v} k={preview.k} hot={hot} /></span>}
+      <div className="jsec__body">
+        <FlatRows value={value} prefix={name} hot={hot} />
+      </div>
+    </details>
+  );
+}
+
+// The first scalar leaf of a branch, with the key it was found under — the preview line.
+function firstLeaf(value, path = "") {
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const f = firstLeaf(value[i], `${path}[${i}]`);
+      if (f) return f;
+    }
+    return undefined;
+  }
+  if (value && typeof value === "object") {
+    if (hrefOnly(value)) return { v: value.href, k: path };
+    for (const [k, v] of Object.entries(value)) {
+      const f = firstLeaf(v, path ? `${path}.${k}` : k);
+      if (f) return f;
+    }
+    return undefined;
+  }
+  return { v: value, k: path };
+}
+
+// Every leaf of a branch as `dot.path[index]` rows, in order. A nested group inside (an object in an
+// array, say) flattens too — one flat list, no recursion boxes.
+function FlatRows({ value, prefix, hot }) {
+  const rows = [];
+  const walk = (v, p) => {
+    if (Array.isArray(v)) {
+      if (!v.length) { rows.push({ path: p, empty: "[ ] empty list" }); return; }
+      v.forEach((x, i) => walk(x, `${p}[${i}]`));
+      return;
+    }
+    if (v && typeof v === "object") {
+      const entries = Object.entries(v);
+      if (!entries.length) { rows.push({ path: p, empty: "{ } no fields" }); return; }
+      if (hrefOnly(v)) { rows.push({ path: p, v: v.href, k: p }); return; }
+      for (const [k, x] of entries) walk(x, p ? `${p}.${k}` : k);
+      return;
+    }
+    rows.push({ path: p, v, k: p });
+  };
+  walk(value, prefix);
+  const base = prefix.split(/[.[]/)[0];
+  return (
+    <dl className="jform jform--flat" data-depth="1">
+      {rows.map((r, i) => {
+        const leafKey = r.k ? r.k.split(/[.[]/).pop().replace(/\]$/, "") : "";
+        return (
+          <div key={`${r.path}-${i}`} className="jform__row" data-hot={hot.has(base) || hot.has(leafKey) ? "true" : undefined} data-alert={ALERT.has(leafKey) ? "true" : undefined}>
+            <dt className="jform__k">{visible(r.path)}</dt>
+            <dd className="jform__d">{r.empty ? <span className="jform__v jform__v--null">{r.empty}</span> : <Value v={r.v} k={r.k} hot={hot} />}</dd>
+          </div>
+        );
+      })}
+    </dl>
+  );
 }
 
 // ---- The pane ---------------------------------------------------------------------------------------------------------------------------------
