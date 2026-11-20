@@ -2,7 +2,6 @@ import { describe, expect, it, beforeEach, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App, { BANNER_UNKNOWN } from "./App";
-import { labelOffsets } from "./components/PatternDiagram";
 import { setJsonView } from "./components/JsonPane";
 
 const STORY = {
@@ -390,8 +389,13 @@ describe("UI standard", () => {
 });
 
 describe("diagram edge labels", () => {
-  it("nudges the two labels of a back-and-forth pair in opposite directions and leaves the rest alone", () => {
-    expect(labelOffsets([{ from: "a", to: "b" }, { from: "b", to: "a" }, { from: "a", to: "c" }])).toEqual([-16, 16, 0]);
-    expect(labelOffsets([])).toEqual([]);
+  it("each arrow has a label item above the boxes, placed by the kit", async () => {
+    const { render } = await import("@testing-library/react");
+    const PatternDiagram = (await import("./components/PatternDiagram")).default;
+    const { container, unmount } = render(<PatternDiagram pattern={DIAGRAM} />);
+    await waitFor(() => expect(document.querySelectorAll(".react-flow__node").length).toBe(DIAGRAM.nodes.length));
+    const labels = [...container.querySelectorAll(".dk-label")].map((l) => l.textContent);
+    DIAGRAM.steps.forEach((s, i) => expect(labels).toContain(`${i + 1}. ${s.label}`));
+    unmount();
   });
 });
