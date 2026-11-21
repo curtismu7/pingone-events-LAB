@@ -55,7 +55,7 @@
 /* Hybrid C+A sections (owner, 2026-11-19): a nested object or array is one collapsed line until opened;
    the body is ONE flat dot-path list, never nested boxes. Same tokens, dark and light. */
 .jsec { min-width: 0; }
-.jsec__head { display: flex; align-items: baseline; gap: 6px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); cursor: pointer; list-style: none; }
+.jsec__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); cursor: pointer; list-style: none; }
 .jsec__head::-webkit-details-marker { display: none; }
 .jsec__head:hover { border-color: var(--accent); }
 .jsec__caret { color: var(--muted); flex: none; }
@@ -74,7 +74,9 @@
 .jform__row[data-hot="true"] > .jform__d > .jform__v { font-weight: 700; color: var(--text); }
 .jform__row[data-alert="true"] { border-left: 3px solid var(--danger-text); border-radius: 4px; padding: 2px 4px 2px 6px; }
 .jform__row[data-alert="true"] > .jform__k, .jform__row[data-alert="true"] > .jform__d > .jform__v { color: var(--danger-text); font-weight: 700; }
-@media (max-width: 480px) { .jform__row { grid-template-columns: minmax(0, 1fr); } }
+/* Phones: key above value. The depth rule (`.jform[data-depth]`, every form carries it) and the flat dot-path rule are more specific
+   than a bare `.jform__row`, so the bare rule never won here; list the same selectors (later in the file, so they win on order). */
+@media (max-width: 480px) { .jform__row, .jform[data-depth] .jform__row, .jsec__body .jform--flat .jform__row { grid-template-columns: minmax(0, 1fr); } }
 .jform__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
 .jform__idx { display: inline-block; margin-bottom: 4px; padding: 0 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 11px; font-weight: 700; color: var(--muted); }
 /* ===== Decoded tokens (Rule 24b, owner 2026-11-18): Header / Payload / Signature under the pane, jwt.io order. Theme tokens only. ===== */
