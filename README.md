@@ -26,9 +26,9 @@ npm run doctor                        # preflight; the same checks GET /api/heal
 # starts; the API, the webhook and /api/health work, and every other path answers 404 JSON {"error":"web_not_built"}.
 npm run reset                         # Reset a running app's default workspace (the one the browser uses); Real events are kept
 ```
-Mock needs nothing. Real settings come from the shared settings file (`~/Development/.env`; `STANDALONE_ENV` overrides): `PINGONE_ENVIRONMENT_ID`, `PINGONE_REGION`, `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET` for the pull, `ELASTICSEARCH_URL` plus `ELASTICSEARCH_API_KEY` (or user and password) for forwarding. Real is on by default only when configured, and the header toggle switches back and forth at runtime.
+Mock needs nothing. Real settings come from the shared settings file (`~/Development/.env`; `STANDALONE_ENV` overrides): `PINGONE_ENVIRONMENT_ID`, `PINGONE_REGION`, `PINGONE_WORKER_CLIENT_ID`, `PINGONE_WORKER_CLIENT_SECRET` for the pull (the names `scripts/pingone-setup.sh` writes; the older `PINGONE_CLIENT_ID` / `PINGONE_CLIENT_SECRET` are read as a documented fallback so an existing file keeps working, and the WORKER names win), `ELASTICSEARCH_URL` plus `ELASTICSEARCH_API_KEY` (or user and password) for forwarding. Real is on by default only when configured, and the header toggle switches back and forth at runtime.
 
-Run locally, the app cannot receive PingOne deliveries (PingOne's cloud cannot reach a laptop). Use Mock to see the whole path, the pull to read delivery health, or the SE deployment for the real thing.
+Run locally, the app **cannot receive PingOne deliveries** (PingOne's cloud cannot reach a laptop, and this lab does not try to work around that). Real on a laptop is the read-only pull; **forwarding** events to your cluster needs `ELASTICSEARCH_URL` and `ELASTICSEARCH_API_KEY` (or a user and password), and with only the pull set there is nothing to forward until a delivery arrives from the SE deployment. If neither the pull settings nor `WEBHOOK_ALLOWED_HOSTS` are set, the Real toggle is disabled with that reason. Use Mock to see the whole path, the pull to read delivery health, or the SE deployment for the real thing.
 
 ## Run from a clone
 

@@ -5,7 +5,7 @@ import { pingoneFrom } from '../src/config.js';
 import { activity, CLIENT_ID, ENV_ID, fakeFetch, jsonRes, post, withServer } from './helpers.js';
 
 const SECRET = 'a-test-secret-value';
-const ENV = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_CLIENT_ID: CLIENT_ID, PINGONE_CLIENT_SECRET: SECRET, PINGONE_REGION: 'eu' };
+const ENV = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_WORKER_CLIENT_ID: CLIENT_ID, PINGONE_WORKER_CLIENT_SECRET: SECRET, PINGONE_REGION: 'eu' };
 const failedAct = (n) => ({ ...activity(n, 'EVENT_DELIVERY.FAILED'), resources: [{ type: 'SUBSCRIPTION', id: 'sub-1', name: 'EXAMPLE-SUB' }], result: { status: 'FAILED', description: 'Connection attempt failed with error: 503' }, recordedAt: `2026-11-07T1${n}:00:00.000Z` });
 const SUBS = { _embedded: { subscriptions: [{ id: 'sub-1', name: 'EXAMPLE-SUB', enabled: true, format: 'ACTIVITY', httpEndpoint: { url: 'https://hook.example/webhook/pingone-events?token=SHOULD-NOT-SHOW', headers: { Authorization: 'Basic SHOULD-NOT-SHOW' } }, filterOptions: { includedActionTypes: ['A.B', 'C.D'] }, connectionStatus: { status: 'FAILED', lastAttemptedAt: '2026-11-07T12:00:00Z', lastSuccessfulAt: '2026-10-30T11:00:00Z', lastResponseCode: '503', lastResponseDetails: 'Delivery failed' } }] } };
 function pingone({ acts = [activity(1), failedAct(2), failedAct(3)], tokenStatus = 200 } = {}) {

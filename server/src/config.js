@@ -14,19 +14,26 @@ export const PINGONE_REGIONS = ['com', 'eu', 'asia', 'ca', 'com.au', 'sg'];
 const INDEX = /^[a-z0-9][a-z0-9._-]{0,100}$/;
 export const DEFAULT_INDEX = 'pingone-events';
 
+// The worker app credentials: PINGONE_WORKER_CLIENT_ID / PINGONE_WORKER_CLIENT_SECRET are the names scripts/pingone-setup.sh writes.
+// The older PINGONE_CLIENT_ID / PINGONE_CLIENT_SECRET are still read as a fallback (an existing file keeps working); the WORKER name wins.
+export const workerFrom = (env = process.env) => ({
+  clientId: env.PINGONE_WORKER_CLIENT_ID || env.PINGONE_CLIENT_ID,
+  secret: env.PINGONE_WORKER_CLIENT_SECRET || env.PINGONE_CLIENT_SECRET,
+});
+
 // PingOne pull settings, or null. The returned object holds the secret: keep it inside the client, never serialise it.
 export function pingoneFrom(env = process.env) {
   const envId = env.PINGONE_ENVIRONMENT_ID;
-  const clientId = env.PINGONE_CLIENT_ID;
-  const secret = env.PINGONE_CLIENT_SECRET;
+  const { clientId, secret } = workerFrom(env);
   const tld = env.PINGONE_REGION || 'com';
   if (!UUID.test(envId || '') || !UUID.test(clientId || '') || typeof secret !== 'string' || !secret || secret.length > 300 || !PINGONE_REGIONS.includes(tld)) return null;
   return { envId, clientId, secret, tld, authHost: `auth.pingone.${tld}`, apiHost: `api.pingone.${tld}` };
 }
 export function pullProblemFrom(env = process.env) {
   if (pingoneFrom(env)) return null;
-  if (!env.PINGONE_ENVIRONMENT_ID || !env.PINGONE_CLIENT_ID || !env.PINGONE_CLIENT_SECRET) return 'The PingOne pull needs PINGONE_ENVIRONMENT_ID, PINGONE_CLIENT_ID and PINGONE_CLIENT_SECRET (a worker app with read access) in the settings file. Mock keeps working.';
-  return `PINGONE_ENVIRONMENT_ID and PINGONE_CLIENT_ID must be UUIDs and PINGONE_REGION one of ${PINGONE_REGIONS.join(', ')}. Mock keeps working.`;
+  const w = workerFrom(env);
+  if (!env.PINGONE_ENVIRONMENT_ID || !w.clientId || !w.secret) return 'The PingOne pull needs PINGONE_ENVIRONMENT_ID, PINGONE_WORKER_CLIENT_ID and PINGONE_WORKER_CLIENT_SECRET (a worker app with read access; the older PINGONE_CLIENT_ID / PINGONE_CLIENT_SECRET names also work) in the settings file. Mock keeps working.';
+  return `PINGONE_ENVIRONMENT_ID and PINGONE_WORKER_CLIENT_ID must be UUIDs and PINGONE_REGION one of ${PINGONE_REGIONS.join(', ')}. Mock keeps working.`;
 }
 
 // Hosts that may reach the two webhook paths from outside this machine, or null when none is set.
@@ -66,7 +73,7 @@ export const forwardOnStart = (env = process.env) => hostedFrom(env) && env.FORW
 export const realAvailableFrom = (env = process.env) => pingoneFrom(env) !== null || webhookFrom(env) !== null;
 export function realProblemFrom(env = process.env) {
   if (realAvailableFrom(env)) return null;
-  return 'Real needs the PingOne pull settings (PINGONE_ENVIRONMENT_ID, PINGONE_REGION, PINGONE_CLIENT_ID, PINGONE_CLIENT_SECRET) or WEBHOOK_ALLOWED_HOSTS (the public host name PingOne posts to) in the settings file. Mock keeps working.';
+  return 'Real needs the PingOne pull settings (PINGONE_ENVIRONMENT_ID, PINGONE_REGION, PINGONE_WORKER_CLIENT_ID, PINGONE_WORKER_CLIENT_SECRET) or WEBHOOK_ALLOWED_HOSTS (the public host name PingOne posts to) in the settings file. Run on a laptop, this app cannot receive PingOne deliveries (PingOne\'s cloud cannot reach it): the pull reads delivery health, and forwarding events also needs ELASTICSEARCH_URL plus ELASTICSEARCH_API_KEY. Mock keeps working.';
 }
 
 // The launch mode. Default: Real if configured, else Mock. The runtime mode (POST /api/mode) starts from this.
@@ -118,7 +125,7 @@ export function uiAuthFrom(env = process.env) {
   return user(env.UI_BASIC_USER) && secret(env.UI_BASIC_PASSWORD) ? { user: env.UI_BASIC_USER, password: env.UI_BASIC_PASSWORD } : null;
 }
 // The settings a hosted deployment reads. A placeholder in any of them, or a half-set or invalid PingOne / Elasticsearch group, stops it.
-const HOSTED_KEYS = ['WEBHOOK_BASIC_USER', 'WEBHOOK_BASIC_PASSWORD', 'WEBHOOK_HEADER_NAME', 'WEBHOOK_HEADER_VALUE', 'UI_BASIC_USER', 'UI_BASIC_PASSWORD', 'PINGONE_ENVIRONMENT_ID', 'PINGONE_REGION', 'PINGONE_CLIENT_ID', 'PINGONE_CLIENT_SECRET', 'ELASTICSEARCH_URL', 'ELASTICSEARCH_API_KEY', 'ELASTICSEARCH_USERNAME', 'ELASTICSEARCH_PASSWORD', 'ELASTICSEARCH_INDEX', 'WEBHOOK_ALLOWED_HOSTS', 'LAB_ALLOWED_HOSTS'];
+const HOSTED_KEYS = ['WEBHOOK_BASIC_USER', 'WEBHOOK_BASIC_PASSWORD', 'WEBHOOK_HEADER_NAME', 'WEBHOOK_HEADER_VALUE', 'UI_BASIC_USER', 'UI_BASIC_PASSWORD', 'PINGONE_ENVIRONMENT_ID', 'PINGONE_REGION', 'PINGONE_WORKER_CLIENT_ID', 'PINGONE_WORKER_CLIENT_SECRET', 'PINGONE_CLIENT_ID', 'PINGONE_CLIENT_SECRET', 'ELASTICSEARCH_URL', 'ELASTICSEARCH_API_KEY', 'ELASTICSEARCH_USERNAME', 'ELASTICSEARCH_PASSWORD', 'ELASTICSEARCH_INDEX', 'WEBHOOK_ALLOWED_HOSTS', 'LAB_ALLOWED_HOSTS'];
 
 // Why a hosted deployment must not start, or [] when it can. Names the setting, never a value.
 export function hostedProblems(env = process.env) {
@@ -133,7 +140,7 @@ export function hostedProblems(env = process.env) {
   }
   const placeholders = HOSTED_KEYS.filter((k) => typeof env[k] === 'string' && placeholder(env[k]));
   if (placeholders.length) p.push(`${placeholders.join(', ')} still hold${placeholders.length === 1 ? 's' : ''} the template placeholder REPLACE-ME: set a real value or delete the key`);
-  const anyPull = ['PINGONE_ENVIRONMENT_ID', 'PINGONE_CLIENT_ID', 'PINGONE_CLIENT_SECRET'].some((k) => env[k]);
+  const anyPull = ['PINGONE_ENVIRONMENT_ID', 'PINGONE_WORKER_CLIENT_ID', 'PINGONE_WORKER_CLIENT_SECRET', 'PINGONE_CLIENT_ID', 'PINGONE_CLIENT_SECRET'].some((k) => env[k]);
   if (anyPull && !pingoneFrom(env)) p.push(pullProblemFrom(env).replace(' Mock keeps working.', '') + ' Set all four or delete them');
   if (env.ELASTICSEARCH_URL && !sinkFrom(env)) p.push('ELASTICSEARCH_URL / ELASTICSEARCH_INDEX / credentials are set but not valid (see sink-config); fix or delete them');
   return p;
@@ -149,6 +156,6 @@ export function trustProxyHops(env = process.env) {
 
 // Every secret value in the settings, for scrubbing error text that might echo one (a cluster, a proxy or PingOne repeating a header back).
 export function allSecretsFrom(env = process.env) {
-  return [env.PINGONE_CLIENT_SECRET, env.WEBHOOK_BASIC_PASSWORD, env.WEBHOOK_HEADER_VALUE, env.UI_BASIC_PASSWORD, env.ELASTICSEARCH_API_KEY, env.ELASTICSEARCH_PASSWORD]
+  return [env.PINGONE_WORKER_CLIENT_SECRET, env.PINGONE_CLIENT_SECRET, env.WEBHOOK_BASIC_PASSWORD, env.WEBHOOK_HEADER_VALUE, env.UI_BASIC_PASSWORD, env.ELASTICSEARCH_API_KEY, env.ELASTICSEARCH_PASSWORD]
     .filter((x) => typeof x === 'string' && x.length >= 4);
 }

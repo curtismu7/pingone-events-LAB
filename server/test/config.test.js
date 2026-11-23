@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hostedFrom, hostedProblems, modeFrom, pingoneFrom, pullProblemFrom, realAvailableFrom, realHosts, sinkFrom, sinkProblemFrom, sinkPublic, uiAuthFrom, webhookAuthFrom, webhookFrom } from '../src/config.js';
+import { allSecretsFrom, hostedFrom, hostedProblems, modeFrom, pingoneFrom, pullProblemFrom, realAvailableFrom, realHosts, realProblemFrom, sinkFrom, sinkProblemFrom, sinkPublic, uiAuthFrom, webhookAuthFrom, webhookFrom, workerFrom } from '../src/config.js';
 import { ENV_ID, CLIENT_ID } from './helpers.js';
 
-const PULL = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_CLIENT_ID: CLIENT_ID, PINGONE_CLIENT_SECRET: 'a-test-secret-value', PINGONE_REGION: 'eu' };
+const PULL = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_WORKER_CLIENT_ID: CLIENT_ID, PINGONE_WORKER_CLIENT_SECRET: 'a-test-secret-value', PINGONE_REGION: 'eu' };
 const ES = { ELASTICSEARCH_URL: 'https://cluster.example:9200', ELASTICSEARCH_API_KEY: 'test-api-key-value' };
 
 test('Mock is the default; Real needs the pull settings or a public webhook host', () => {
@@ -20,12 +20,38 @@ test('the pull settings are validated; the secret stays inside the settings obje
   const p = pingoneFrom(PULL);
   assert.deepEqual([p.authHost, p.apiHost], ['auth.pingone.eu', 'api.pingone.eu']);
   assert.equal(pingoneFrom({ ...PULL, PINGONE_REGION: undefined }).authHost, 'auth.pingone.com');
-  for (const bad of [{ PINGONE_ENVIRONMENT_ID: 'nope' }, { PINGONE_CLIENT_ID: 'nope' }, { PINGONE_CLIENT_SECRET: '' }, { PINGONE_REGION: 'evil.example' }, { PINGONE_REGION: 'NA' }]) {
+  for (const bad of [{ PINGONE_ENVIRONMENT_ID: 'nope' }, { PINGONE_WORKER_CLIENT_ID: 'nope' }, { PINGONE_WORKER_CLIENT_SECRET: '' }, { PINGONE_REGION: 'evil.example' }, { PINGONE_REGION: 'NA' }]) {
     assert.equal(pingoneFrom({ ...PULL, ...bad }), null, JSON.stringify(bad).slice(0, 40));
     assert.ok(pullProblemFrom({ ...PULL, ...bad }));
   }
   assert.equal(pullProblemFrom(PULL), null);
   assert.ok(!JSON.stringify(pullProblemFrom({ ...PULL, PINGONE_REGION: 'x' })).includes('a-test-secret-value'));
+});
+
+test('the worker app is read as PINGONE_WORKER_CLIENT_ID/SECRET (what scripts/pingone-setup.sh writes); the older PINGONE_CLIENT_* names still work and lose to them', () => {
+  const OLD = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_CLIENT_ID: CLIENT_ID, PINGONE_CLIENT_SECRET: 'older-test-secret', PINGONE_REGION: 'eu' };
+  assert.equal(pingoneFrom(PULL).clientId, CLIENT_ID);
+  assert.equal(pingoneFrom(OLD).secret, 'older-test-secret', 'the older names alone still enable the pull');
+  assert.equal(modeFrom(OLD), 'real');
+  const OTHER = '00000000-0000-4000-8000-0000000000c2';
+  const both = pingoneFrom({ ...OLD, PINGONE_WORKER_CLIENT_ID: OTHER, PINGONE_WORKER_CLIENT_SECRET: 'worker-test-secret' });
+  assert.deepEqual([both.clientId, both.secret], [OTHER, 'worker-test-secret'], 'WORKER names win');
+  assert.deepEqual(workerFrom({ PINGONE_WORKER_CLIENT_ID: '', PINGONE_CLIENT_ID: 'x' }), { clientId: 'x', secret: undefined }, 'an empty WORKER value falls back');
+  assert.match(pullProblemFrom({ PINGONE_ENVIRONMENT_ID: ENV_ID }), /PINGONE_WORKER_CLIENT_ID and PINGONE_WORKER_CLIENT_SECRET/);
+  // both secrets are scrubbed from error text
+  assert.ok(allSecretsFrom({ PINGONE_WORKER_CLIENT_SECRET: 'worker-test-secret', PINGONE_CLIENT_SECRET: 'older-test-secret' }).length === 2);
+  // nothing points at another demo suite, and nothing prints a value
+  const reason = realProblemFrom({});
+  assert.ok(!/AI-DEMO2|ai-demo/i.test(reason));
+  assert.match(reason, /PINGONE_WORKER_CLIENT_ID/);
+});
+
+test('Real-disabled reason says the truth about a laptop: no deliveries, the pull works, forwarding needs ELASTICSEARCH_*', () => {
+  const reason = realProblemFrom({});
+  assert.match(reason, /cannot receive PingOne deliveries/);
+  assert.match(reason, /ELASTICSEARCH_URL/);
+  assert.match(reason, /ELASTICSEARCH_API_KEY/);
+  assert.equal(realProblemFrom(PULL), null);
 });
 
 test('the forwarding target is validated: https (http only on loopback), no credentials/query/path, no metadata or link-local hosts', () => {

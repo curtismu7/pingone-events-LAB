@@ -16,7 +16,7 @@ const HOSTED = { PEV_HOSTED: '1', WEBHOOK_BASIC_USER: 'pingone', WEBHOOK_BASIC_P
 const WH = basic('pingone', HW); const UI = basic('viewer', HU);
 const hook = (url, body, headers = {}, p = '/webhook/pingone-events') => fetch(`${url}${p}`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
 const FAST = { sleep: async () => {}, flushDelayMs: 0 };
-const REAL = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_CLIENT_ID: CLIENT_ID, PINGONE_CLIENT_SECRET: 'a-test-secret-value', PINGONE_REGION: 'eu' };
+const REAL = { PINGONE_ENVIRONMENT_ID: ENV_ID, PINGONE_WORKER_CLIENT_ID: CLIENT_ID, PINGONE_WORKER_CLIENT_SECRET: 'a-test-secret-value', PINGONE_REGION: 'eu' };
 const ES = { ELASTICSEARCH_URL: 'https://cluster.example:9200', ELASTICSEARCH_API_KEY: 'test-api-key-value' };
 
 // ---- 3: PEV_HOSTED fails closed -------------------------------------------------------------------------------------------------------
@@ -51,6 +51,7 @@ test('4. hosted refuses a placeholder in ANY key, and half-set or invalid PingOn
   const p = (extra) => hostedProblems({ ...HOSTED, ...extra }).join(' | ');
   assert.match(p({ ELASTICSEARCH_API_KEY: 'REPLACE-ME-api-key', ELASTICSEARCH_URL: 'https://cluster.example' }), /ELASTICSEARCH_API_KEY.*REPLACE-ME/);
   assert.match(p({ PINGONE_CLIENT_ID: 'REPLACE-ME-client-uuid' }), /PINGONE_CLIENT_ID.*REPLACE-ME/);
+  assert.match(p({ PINGONE_WORKER_CLIENT_ID: 'REPLACE-ME-client-uuid' }), /PINGONE_WORKER_CLIENT_ID.*REPLACE-ME/);
   assert.match(p({ PINGONE_ENVIRONMENT_ID: ENV_ID }), /PINGONE|Set all four/);
   assert.match(p({ ELASTICSEARCH_URL: 'http://remote.example' }), /ELASTICSEARCH_URL/);
   assert.deepEqual(hostedProblems({ ...HOSTED, ...REAL, ...ES }), [], 'a complete, valid set is accepted');
