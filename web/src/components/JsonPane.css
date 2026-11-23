@@ -4,7 +4,8 @@
 .jsonbox__toggle button { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 0; min-height: 0; background: var(--surface); color: var(--muted); }
 .jsonbox__toggle button:first-child { border-radius: 6px 0 0 6px; }
 .jsonbox__toggle button:last-child { border-radius: 0 6px 6px 0; }
-.jsonbox__toggle button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+/* The pressed side is a selected state, not an alarm: neutral surface, blue edge + text. Red stays for errors / decisions (owner, 2026-11-21). */
+.jsonbox__toggle button[aria-pressed="true"] { background: var(--j-hot-bg, color-mix(in srgb, var(--text) 9%, transparent)); color: var(--text); border-color: var(--j-hot-edge, var(--status-info)); }
 /* ===== JSON pane (owner 2026-11-14): Form = a form, JSON = coloured by what each part is. Colours come from the theme tokens only. ===== */
 .json, .facts, .http { --j-key: var(--status-info); --j-string: var(--status-ok); --j-number: color-mix(in srgb, var(--status-warn) 50%, var(--danger-text)); --j-bool: var(--status-warn); --j-null: var(--muted); --j-punct: var(--muted); --j-url: color-mix(in srgb, var(--status-info) 55%, var(--status-ok)); --j-id: color-mix(in srgb, var(--status-ok) 60%, var(--text)); --j-time: color-mix(in srgb, var(--status-warn) 55%, var(--text)); --j-hot-bg: color-mix(in srgb, var(--text) 9%, transparent); --j-hot-edge: var(--status-info); }
 /* FULL VIEW (owner 2026-11-14, Rule 24): a JSON pane is never a scroll box. It grows to its content, long lines and tokens wrap, and a lab's own
