@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
-      - run: bash scripts/check-ui-standard.sh
+      - run: STANDALONE_UI_CANONICAL_URL=https://raw.githubusercontent.com/curtismu7/AI-DEMO-Standalone/header-standard-2026-11-24/shared/standalone-ui.css bash scripts/check-ui-standard.sh
       # The family conformance gate (vendored copy of demo-kit-base's script) and the production-dependency audit.
       - run: node scripts/conformance.mjs . --new --tier=Demo
       - run: npm audit --omit=dev
