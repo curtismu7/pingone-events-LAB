@@ -202,6 +202,48 @@ button[aria-pressed="true"] {
   outline-offset: 2px;
 }
 
+/* Header brand sizing (header standard, 2026-11-24). The only place a brand size is set:
+   labs must not override .shell-brand* sizes in their own CSS (checker rule B1).
+   rem units, so the TopMenu Text-size control scales them. Markup: .shell-brand >
+   .brand-mark + .shell-brand__text > .shell-brand__name + .shell-brand__tag. */
+.shell-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.shell-brand__text {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  line-height: 1.2;
+}
+.shell-brand__name {
+  font-size: 1.4rem;
+  overflow-wrap: anywhere;
+}
+.shell-brand__tag {
+  font-weight: 400;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+.brand-mark {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+@media (max-width: 600px) {
+  .shell-brand__name,
+  .brand-mark {
+    font-size: 1.15rem;
+  }
+  .shell-brand__tag {
+    display: none;
+  }
+}
+
 /* Phone width: no horizontal scroll. Layout grids drop to one column. */
 @media (max-width: 600px) {
   body {
