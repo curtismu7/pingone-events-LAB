@@ -159,3 +159,6 @@ button.primary:not(:disabled) { background: var(--accent-gradient); color: var(-
   .logtable th, .logtable td { overflow-wrap: anywhere; white-space: normal; }
 }
 .logtable th, .logtable td { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .panel { max-width: 100%; }
+}
