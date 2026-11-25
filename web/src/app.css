@@ -167,3 +167,4 @@ button.primary:not(:disabled) { background: var(--accent-gradient); color: var(-
 @media (max-width: 600px) {
   .typechips { flex-wrap: wrap; }
 }
+.typechips .chip, .typechips > * { overflow-wrap: anywhere; }
