@@ -206,11 +206,15 @@ button[aria-pressed="true"] {
    labs must not override .shell-brand* sizes in their own CSS (checker rule B1).
    rem units, so the TopMenu Text-size control scales them. Markup: .shell-brand >
    .brand-mark + .shell-brand__text > .shell-brand__name + .shell-brand__tag. */
+/* The base size also sits on .shell-brand itself so labs whose brand name is a bare
+   text node (no h1/__name element) get the standard size too; element children with
+   explicit sizes (logos, marks) are unaffected. */
 .shell-brand {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
   min-width: 0;
+  font-size: 1.4rem;
 }
 .shell-brand__text {
   display: inline-flex;
@@ -252,6 +256,7 @@ button[aria-pressed="true"] {
   .shell-bar .shell-brand h1,
   .shell-brand__name,
   .shell-brand h1,
+  .shell-brand,
   .brand-mark {
     font-size: 1.15rem;
   }
