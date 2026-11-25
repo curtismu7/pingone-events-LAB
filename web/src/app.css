@@ -151,3 +151,9 @@ button:disabled { opacity: 0.6; cursor: not-allowed; border-style: dashed; }
 /* A pressed or selected control keeps its filled accent on hover (the plain hover tint would put white text on a light fill). */
 button[aria-pressed="true"]:hover:not(:disabled) { background: var(--accent-deep); color: var(--on-accent); }
 button.primary:not(:disabled) { background: var(--accent-gradient); color: var(--on-accent); border-color: var(--primary-edge); }
+
+/* Phone: the log table's 38rem min-width pushed the page to 474px on a 390px phone;
+   below 600px the table scrolls inside its .scroll wrapper instead. */
+@media (max-width: 600px) {
+  .logtable { min-width: 0; }
+}
