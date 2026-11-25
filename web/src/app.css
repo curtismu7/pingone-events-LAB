@@ -162,3 +162,8 @@ button.primary:not(:disabled) { background: var(--accent-gradient); color: var(-
 @media (max-width: 600px) {
   .panel { max-width: 100%; }
 }
+
+/* The type chips (flex, no wrap) overflowed their panel by ~55px on phones. */
+@media (max-width: 600px) {
+  .typechips { flex-wrap: wrap; }
+}
