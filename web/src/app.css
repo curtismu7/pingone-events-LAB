@@ -156,4 +156,6 @@ button.primary:not(:disabled) { background: var(--accent-gradient); color: var(-
    below 600px the table scrolls inside its .scroll wrapper instead. */
 @media (max-width: 600px) {
   .logtable { min-width: 0; }
+  .logtable th, .logtable td { overflow-wrap: anywhere; white-space: normal; }
 }
+.logtable th, .logtable td { overflow-wrap: anywhere; }
