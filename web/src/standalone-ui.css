@@ -219,7 +219,15 @@ button[aria-pressed="true"] {
   min-width: 0;
   line-height: 1.2;
 }
-.shell-brand__name {
+/* .shell-bar .shell-brand h1 outranks labs' own `.shell-bar h1 { font-size }` rules
+   (specificity 0-2-1 vs 0-1-1) — the sweep found those overriding the flat brand everywhere. */
+.shell-bar .shell-brand__name,
+.shell-bar .shell-brand h1 {
+  font-size: 1.4rem;
+  overflow-wrap: anywhere;
+}
+.shell-brand__name,
+.shell-brand h1 {
   font-size: 1.4rem;
   overflow-wrap: anywhere;
 }
@@ -234,8 +242,16 @@ button[aria-pressed="true"] {
   font-size: 1.4rem;
   line-height: 1;
 }
+/* Flat-brand labs (name in a bare h1 inside .shell-brand) get the same sizing. */
+.shell-brand h1 {
+  margin: 0;
+  color: inherit;
+}
 @media (max-width: 600px) {
+  .shell-bar .shell-brand__name,
+  .shell-bar .shell-brand h1,
   .shell-brand__name,
+  .shell-brand h1,
   .brand-mark {
     font-size: 1.15rem;
   }
