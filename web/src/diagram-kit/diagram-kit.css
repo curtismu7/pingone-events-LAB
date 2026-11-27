@@ -38,3 +38,23 @@
 .dk-passport-actions { display: flex; gap: 8px; margin-top: 10px; }
 .dk-passport .dk-passport-actions button { min-height: 0; padding: 2px 10px; border: 1px solid var(--border, var(--th-border)); border-radius: 6px; background: none; color: var(--text, var(--th-text)); font: inherit; cursor: pointer; }
 .dk-passport-url { width: 100%; margin-top: 6px; font-size: 0.7rem; }
+
+/* Calls: the API calls on the box's arrows (a demo-hop/1 hop per arrow, redacted by shared/hop-detail). Sent = green (like Outgoing),
+   Received = amber (like Incoming). A call row expands in place to its request and response; the verdict chips use the status colours. */
+.dk-sec--sent h4 { color: var(--status-ok); }
+.dk-sec--received h4 { color: var(--status-warn, var(--th-status-warning)); }
+.dk-call { flex-wrap: wrap; }
+.dk-call .dk-passport-go { max-width: 45%; }
+.dk-call-verdict { flex: 0 0 auto; padding: 0 6px; border-radius: 999px; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.dk-call-verdict--ok { color: var(--status-ok); border: 1px solid var(--status-ok); }
+.dk-call-verdict--deny { color: var(--status-err, var(--danger-text)); border: 1px solid var(--status-err, var(--danger-text)); }
+.dk-call-verdict--held, .dk-call-verdict--obligation { color: var(--status-warn, var(--th-status-warning)); border: 1px solid var(--status-warn, var(--th-status-warning)); }
+.dk-call-verdict--skip { color: var(--muted, var(--th-text-muted)); border: 1px solid var(--muted, var(--th-text-muted)); }
+.dk-call-verdict--error { color: var(--status-err, var(--danger-text)); border: 1px dashed var(--status-err, var(--danger-text)); }
+.dk-call--deny .dk-passport-go, .dk-call--error .dk-passport-go { color: var(--status-err, var(--danger-text)); }
+.dk-call-detail { flex: 1 0 100%; margin: 6px 0 2px; padding: 6px 8px; border: 1px solid var(--border, var(--th-border)); border-radius: 6px; background: var(--surface, var(--th-bg-card)); }
+.dk-call-part { margin: 4px 0; }
+.dk-call-head { margin: 0 0 2px; padding: 2px 4px; border-left: 3px solid var(--status-info, var(--th-status-info-text)); color: var(--muted, var(--th-text-muted)); font-family: ui-monospace, monospace; font-size: 0.68rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dk-call-plain { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.7rem; font-family: ui-monospace, monospace; }
+.dk-call-refs { margin: 6px 0 0; color: var(--muted, var(--th-text-muted)); font-size: 0.68rem; }
+.dk-call-refs a { color: var(--status-info, var(--th-status-info-text)); }
