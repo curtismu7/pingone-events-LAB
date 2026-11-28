@@ -5,7 +5,7 @@ import App, { BANNER_UNKNOWN } from "./App";
 import { setJsonView } from "./components/JsonPane";
 
 const STORY = {
-  title: "t", intro: "intro text", banner: "SIMULATED: synthetic PingOne events", realBanner: "REAL: events PingOne delivered", verticals: ["retail", "health"], cast: { castClientId: "orders-agent" },
+  title: "t", intro: "intro text", banner: "SIMULATED: synthetic PingOne events", realBanner: "REAL: events PingOne delivered", verticals: ["airlines", "retail", "health"], cast: { castClientId: "passenger-chat-agent" },
   scenarios: [
     { id: "follow-a-signin", kind: "events", title: "Follow one sign-in", play: "signin-success", lesson: "One id is the join." },
     { id: "receiver-down", kind: "delivery", title: "The receiver answers 503", delivery: "receiver_503", lesson: "Door shut." },
@@ -343,7 +343,7 @@ describe("setup, pipeline, talk track, presenter", () => {
   it("draws the boxes from /api/diagram by name and Simulate highlights a step; Reset clears it", async () => {
     await ready(); await nav("Pipeline");
     expect(await screen.findByText("PingOne: activity stream")).toBeInTheDocument();
-    expect(calls.some((c) => c.url.startsWith("/api/diagram?vertical=retail&name=event-pipeline"))).toBe(true);
+    expect(calls.some((c) => c.url.startsWith("/api/diagram?vertical=airlines&name=event-pipeline"))).toBe(true);
     await userEvent.click(screen.getByRole("button", { name: /simulate/i }));
     expect(await screen.findByTestId("pattern-now")).toHaveTextContent("Step 1: event matches");
     await userEvent.click(screen.getByTestId("reset"));

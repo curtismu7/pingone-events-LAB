@@ -40,7 +40,7 @@ Mock proves the shape of what would be sent and how failures are handled. Forwar
 
 ## The scenarios
 
-1. **Follow one sign-in.** Northwind Retail's app (orders-agent) starts a flow, the password check passes, access is allowed and a session is created. Four events share ONE correlation id: that id, not the clock, is how you join them.
+1. **Follow one sign-in.** AirGuard Airlines's app (passenger-chat-agent) starts a flow, the password check passes, access is allowed and a session is created. Four events share ONE correlation id: that id, not the clock, is how you join them.
 2. **Two failed passwords, then denied.** Failed attempts arrive as their own events with a FAILED status. Filter the table by status FAILED to see only the trouble. (Event names in this scenario are illustrative: UNVERIFIED.)
 3. **A second factor is asked for.** A flow that needs more than a password updates, challenges a device and updates the session. (Event names in this scenario are illustrative: UNVERIFIED.)
 4. **A flow is created, updated and deleted.** Most of a busy feed is plumbing like this. It matters when you ask "how many sign-ins?": count the right event type, not the rows.

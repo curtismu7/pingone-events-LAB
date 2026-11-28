@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { DEFAULT_CAST, VERTICALS, fill, fillDeep, loadCast, unfilled, verticalFrom } from '../src/cast.js';
+import { DEFAULT_CAST, DEFAULT_VERTICAL, VERTICALS, fill, fillDeep, loadCast, unfilled, verticalFrom } from '../src/cast.js';
 import { buildStory, rawStory, renderTalkTrackMarkdown } from '../src/story.js';
 import { scanHosts, scanKeys } from '../src/safety.js';
 import { DIAGRAM_NAMES, buildDiagram, rawDiagram } from '../src/diagramData.js';
 import { validateDiagram } from '../src/diagramStudioValidate.js';
 import { checkScenario, runChecks, allPassed } from '../src/doctor.js';
-import { MOCK_SCENARIO_IDS, scenarioActivities } from '../src/mockEvents.js';
+import { MOCK_SCENARIO_IDS, handWritten, scenarioActivities } from '../src/mockEvents.js';
 import { buildBulkBody } from '../src/sinks/elasticsearch.js';
 import { parseDelivery } from '../src/eventParser.js';
 import { withServer } from './helpers.js';
@@ -19,11 +19,11 @@ const text = JSON.stringify(rawStory());
 test('every {{cast}} token in the story is defined in every vertical pack (and an undefined token FAILS)', () => {
   assert.deepEqual(unfilled(text, DEFAULT_CAST), []);
   for (const [name, cast] of Object.entries(VERTICALS)) assert.deepEqual(unfilled(text, cast), [], name);
-  assert.equal(Object.keys(VERTICALS).length, 3);
+  assert.equal(Object.keys(VERTICALS).length, 4); assert.deepEqual(Object.keys(VERTICALS).sort(), ['airlines', 'finance', 'health', 'retail']);
   assert.deepEqual(unfilled('hello {{castNope}} and {{castBrand}}', DEFAULT_CAST), ['castNope'], 'the check that guards the story catches an undefined token');
   assert.equal(fill('{{castBrand}} {{castNope}}', DEFAULT_CAST), `${DEFAULT_CAST.castBrand} {{castNope}}`);
   assert.deepEqual(fillDeep({ a: ['{{castHost}}'] }, DEFAULT_CAST), { a: [DEFAULT_CAST.castHost] });
-  assert.equal(verticalFrom('finance'), 'finance'); assert.equal(verticalFrom('nope'), 'retail');
+  assert.equal(verticalFrom('finance'), 'finance'); assert.equal(verticalFrom('retail'), 'retail'); assert.equal(verticalFrom('airlines'), 'airlines'); assert.equal(verticalFrom('nope'), 'airlines');
 });
 
 test('rule 10 covers the diagram files too: every {{token}} in server/diagrams/*.json is defined in every vertical, and the guard fires on an undefined one', async () => {
@@ -40,7 +40,34 @@ test('rule 10 covers the diagram files too: every {{token}} in server/diagrams/*
 test('the story uses its cast: each vertical changes the names in the lessons, and no token survives', () => {
   const retail = JSON.stringify(buildStory(VERTICALS.retail)); const health = JSON.stringify(buildStory(VERTICALS.health));
   assert.notEqual(retail, health); assert.ok(retail.includes('Northwind Retail')); assert.ok(health.includes('Contoso Health'));
-  for (const s of [retail, health, JSON.stringify(buildStory(VERTICALS.finance))]) assert.ok(!/\{\{/.test(s));
+  const airlines = JSON.stringify(buildStory(VERTICALS.airlines)); assert.ok(airlines.includes('AirGuard Airlines')); assert.notEqual(airlines, retail);
+  for (const s of [retail, health, airlines, JSON.stringify(buildStory(VERTICALS.finance))]) assert.ok(!/\{\{/.test(s));
+});
+
+// Old brands that must never show in the airline run (the three older packs, and the earlier airline name). The packs themselves may name them.
+const RETIRED = /Northwind|Fabrikam|Contoso|Harbor|Vellum|Meridian Air|orders-agent|claims-agent|payments-agent/i;
+test('AirGuard Airlines is the default: a fresh run is the airlines pack, an unknown vertical falls back to it', async () => {
+  assert.equal(DEFAULT_VERTICAL, 'airlines'); assert.equal(DEFAULT_CAST.castBrand, 'AirGuard Airlines'); assert.equal(DEFAULT_CAST.castHost, 'airguard');
+  assert.equal(loadCast(undefined).castBrand, 'AirGuard Airlines'); assert.equal(loadCast(undefined, 'nope').castBrand, 'AirGuard Airlines');
+  assert.equal(loadCast(undefined, 'retail').castBrand, 'Northwind Retail', 'a saved retail choice still works');
+  await withServer(async (url) => {
+    for (const q of ['', '?vertical=nope', '?vertical=airlines']) {
+      const s = await (await fetch(`${url}/api/scenarios${q}`)).json();
+      assert.equal(s.cast.castBrand, 'AirGuard Airlines', q); assert.equal(s.cast.castClientId, 'passenger-chat-agent', q);
+    }
+    const r = await (await fetch(`${url}/api/scenarios?vertical=retail`)).json(); assert.equal(r.cast.castBrand, 'Northwind Retail');
+  });
+});
+
+test('no old brand leaks into the airline run: story, talk track, diagram and every mock event', () => {
+  const cast = VERTICALS.airlines;
+  const rendered = [JSON.stringify(buildStory(cast)), renderTalkTrackMarkdown(cast), ...DIAGRAM_NAMES.map((n) => JSON.stringify(buildDiagram(cast, n))),
+    ...MOCK_SCENARIO_IDS.map((id) => JSON.stringify(scenarioActivities(id, cast, { seq: 1, now: 0 }))), JSON.stringify(handWritten(cast))].join('\n');
+  assert.ok(rendered.includes('AirGuard Airlines') && rendered.includes('passenger-chat-agent'));
+  assert.deepEqual(rendered.match(RETIRED), null);
+  // the check can fail: the retail run does trip it
+  assert.ok(RETIRED.test(JSON.stringify(buildStory(VERTICALS.retail))));
+  assert.ok(!/@|:\/\//.test(Object.values(cast).join(' ')) && scanHosts(JSON.stringify(buildStory(cast))).length === 0);
 });
 
 test('the story names no real host, tenant, tunnel, key or customer: only placeholders, .example and .invalid', () => {
@@ -130,7 +157,7 @@ test('customer.config overrides only the four cast values and is sanitised', () 
 test('GET /api/scenarios, /api/diagram and /api/setup serve the story, the diagram and the Setup data (placeholders only)', async () => {
   await withServer(async (url) => {
     const s = await (await fetch(`${url}/api/scenarios?vertical=finance`)).json();
-    assert.equal(s.cast.castBrand, 'Fabrikam Bank'); assert.deepEqual(s.verticals, ['retail', 'health', 'finance']);
+    assert.equal(s.cast.castBrand, 'Fabrikam Bank'); assert.deepEqual(s.verticals, ['airlines', 'retail', 'health', 'finance']);
     assert.equal(s.setup.webhook.destination, 'https://<se-host>/webhook/pingone-events');
     assert.ok(s.setup.webhook.fields.some(([k]) => k === 'Event Schema') && s.setup.webhook.fields.some(([k, v]) => k === 'Payload Limit' && /Events, 1/.test(v)) && s.setup.webhook.fields.some(([k, v]) => k === 'JSON Format' && /array/.test(v)));
     assert.match(JSON.stringify(s.setup.webhook.managementApi), /PINGONE-EVENTS-LAB/);

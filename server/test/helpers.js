@@ -40,7 +40,7 @@ export const activity = (n = 1, type = 'FLOW.CREATED', extra = {}) => ({
   correlationId: '00000000-0000-4000-8000-0000000000ff',
   _embedded: {},
   action: { type, description: type.toLowerCase() },
-  actors: { client: { id: CLIENT_ID, name: 'orders-agent', environment: { id: ENV_ID } } },
+  actors: { client: { id: CLIENT_ID, name: 'passenger-chat-agent', environment: { id: ENV_ID } } },
   resources: [{ id: '00000000-0000-4000-8000-0000000000aa', type: type.split('.')[0], name: 'x' }],
   result: { status: 'SUCCESS' },
   ...extra,
