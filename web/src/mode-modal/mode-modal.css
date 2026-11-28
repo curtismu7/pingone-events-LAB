@@ -1,0 +1,24 @@
+/* Real-or-mock modal: one word, one line, one button. Tokens come from standalone-ui.css; the fallbacks keep it readable without it. */
+.mode-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(5, 23, 39, 0.55);
+}
+.mode-modal {
+  max-width: 28rem;
+  padding: 24px 28px;
+  border: 1px solid var(--border, #556070);
+  border-top: 6px solid var(--accent, #d20e0f);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  color: var(--text, #051727);
+  text-align: center;
+}
+.mode-modal[data-mode="real"] { border-top-color: var(--focus, #12538d); }
+.mode-modal-word { font-size: 2.5rem; font-weight: 800; letter-spacing: 0.08em; }
+.mode-modal p { margin: 8px 0 18px; font-size: 1rem; line-height: 1.45; }

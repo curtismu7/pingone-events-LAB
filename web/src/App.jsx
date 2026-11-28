@@ -7,6 +7,7 @@ import DiagramTab from "./components/DiagramTab";
 import TalkTrack from "./components/TalkTrack";
 import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu";
+import ModeModal from "./mode-modal/ModeModal.jsx";
 import { getJson, resetWorkspace, setMode } from "./api";
 
 export const TABS = [
@@ -17,8 +18,11 @@ export const TABS = [
   { id: "setup", label: "Setup" },
   { id: "talk", label: "Talk track" },
 ];
-// The banner is never blank: until /api/scenarios answers (or if it fails) it says the safe thing.
-export const BANNER_UNKNOWN = "SIMULATED: synthetic PingOne events and a pretend cluster. Nothing here is sent to PingOne or to any Elasticsearch or OpenSearch cluster.";
+// The Real-or-mock modal's two lines (shared/mode-modal). Until /api/info answers the modal is held; if it fails the page reads as Mock, the safe thing.
+const MODE_LINES = {
+  mock: "Everything here is simulated: synthetic PingOne events, a pretend subscription and a pretend cluster. Nothing is sent to PingOne or to any Elasticsearch or OpenSearch cluster.",
+  real: "These are events PingOne delivered to this app, plus what you pull read-only from the PingOne API. Forwarding to your cluster stays OFF until you turn it on, and is UNVERIFIED against a live cluster.",
+};
 const SAY = { events: ["say-first", "receive", "join"], delivery: ["health", "silent"], forward: ["forward", "unverified"], pipeline: ["say-first"], setup: ["pull", "kibana"] };
 const THEMES = ["auto", "light", "dark"];
 
@@ -90,7 +94,6 @@ export default function App() {
   };
 
   const real = info?.mode === "real";
-  const banner = story ? (real ? story.realBanner : story.banner) : BANNER_UNKNOWN;
   return (
     <div className={`app${presenter ? " app--presenter" : ""}`}>
       <header className="shell-bar">
@@ -115,7 +118,6 @@ export default function App() {
         </span>
       </header>
       <main>
-        <p className="banner" role="note" data-testid="banner" data-state={real ? "live" : undefined}>{banner}</p>
         <div className="head">
           <div>
             <h1>PingOne Events Lab</h1>
@@ -148,6 +150,7 @@ export default function App() {
           )}
         </div>
       </main>
+      <ModeModal mode={real ? "real" : "mock"} lines={MODE_LINES} suppress={info === undefined} storageKey="pev-mode" />
     </div>
   );
 }

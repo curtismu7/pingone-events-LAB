@@ -17,7 +17,7 @@ button:focus-visible { outline: 2px solid var(--th-status-info); outline-offset:
 .track__now p { margin: 0; font-size: var(--font-size-base); line-height: 1.5; }
 .keys { color: var(--th-text-muted); font-size: var(--font-size-2xs); }
 .app-error { padding: 16px; color: var(--th-accent); }
-/* Presenter mode: less chrome, bigger talk track. The simulation banner stays. */
+/* Presenter mode: less chrome, bigger talk track. */
 .app--presenter .track__now h2, .track__now h3 { font-size: var(--font-size-xl); }
 .app--presenter .track__now p { font-size: var(--font-size-lg); line-height: 1.55; }
 .app--presenter .head h1 { font-size: var(--font-size-lg); }
@@ -89,9 +89,6 @@ details { margin: 6px 0; } summary { cursor: pointer; font-size: var(--font-size
 .shell-badge { padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--accent-gradient); color: var(--on-accent); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
 .shell-bar .seg { margin: 0; flex-wrap: nowrap; }
 @media (max-width: 600px) { .shell-bar { gap: 0.75rem; padding: 0.6rem 1rem; } .shell-nav { order: 3; flex-basis: 100%; } }
-
-/* ===== 2. Simulation banner (the shared .banner rule owns the colours) ===== */
-.app > main > .banner { margin: 0 -16px; padding: 8px 16px; }
 
 /* ===== PingOne Events Lab ===== */
 .events, .delivery, .forward, .setup { display: grid; gap: 12px; }
