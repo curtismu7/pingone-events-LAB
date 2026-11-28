@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import App, { BANNER_UNKNOWN } from "./App";
+import App from "./App";
 import { setJsonView } from "./components/JsonPane";
 
 const STORY = {
@@ -65,34 +65,35 @@ function mockFetch() {
   });
 }
 beforeEach(() => { override = {}; mockFetch(); setJsonView("raw"); window.location.hash = ""; });
+afterEach(() => sessionStorage.clear()); // the Real-or-mock modal is dismissed once per session: later tests start fresh
 const ready = async () => { render(<App />); await screen.findByText("Follow one sign-in"); await screen.findByTestId("events-table"); };
 const nav = (name) => userEvent.click(screen.getByRole("link", { name }));
 
 describe("shell and rule 19 toggle", () => {
-  it("shows the shell bar, the banner above the title, the mode, and sends X-Workspace on API calls", async () => {
+  it("shows the shell bar, the mode, and sends X-Workspace on API calls, with no simulation banner", async () => {
     await ready();
     expect(document.querySelector("header.shell-bar .shell-brand")).not.toBeNull();
-    expect(screen.getByTestId("banner")).toHaveTextContent(/^SIMULATED/);
-    expect(screen.getByTestId("banner").compareDocumentPosition(screen.getByRole("heading", { level: 1 })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByTestId("banner")).toBeNull();
+    expect(document.querySelector("main > .banner")).toBeNull();
     expect(screen.getByTestId("mode")).toHaveTextContent("Mock");
     expect(calls.find((c) => c.url.startsWith("/api/events")).opts.headers["x-workspace"]).toMatch(/^[a-z0-9-]{1,40}$/);
     expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute("aria-current", "page");
   });
 
-  it("the mode select reflects the mode, switches both ways without a reload, reloads the data, and the banner follows", async () => {
+  it("the mode select reflects the mode, switches both ways without a reload, reloads the data, and the modal follows", async () => {
     await ready();
     const modeSelect = screen.getByTestId("mode-select");
     expect(modeSelect).toHaveValue("mock");
     const before = calls.filter((c) => c.url.startsWith("/api/events")).length;
     await userEvent.selectOptions(modeSelect, "real");
     await waitFor(() => expect(screen.getByTestId("mode-select")).toHaveValue("real"));
-    expect(screen.getByTestId("banner")).toHaveTextContent(/^REAL/);
-    expect(screen.getByTestId("banner")).toHaveAttribute("data-state", "live");
+    expect(screen.getByTestId("mode-modal")).toHaveAttribute("data-mode", "real"); // MOCK was dismissed, REAL still shows
+    expect(screen.getByTestId("mode-modal")).toHaveTextContent(/events PingOne delivered/);
     await waitFor(() => expect(calls.filter((c) => c.url.startsWith("/api/events")).length).toBeGreaterThan(before));
     expect(JSON.parse(calls.filter((c) => c.url === "/api/mode").at(-1).opts.body)).toEqual({ source: "real" });
     await userEvent.selectOptions(screen.getByTestId("mode-select"), "mock");
     await waitFor(() => expect(screen.getByTestId("mode-select")).toHaveValue("mock"));
-    expect(screen.getByTestId("banner")).toHaveTextContent(/^SIMULATED/);
+    expect(screen.getByTestId("mode-modal")).toHaveAttribute("data-mode", "mock");
   });
 
   it("Real is disabled with a how-to tooltip when it is not configured", async () => {
@@ -110,16 +111,41 @@ describe("shell and rule 19 toggle", () => {
     expect(screen.getByTestId("mode-select")).toHaveValue("mock");
   });
 
-  it("the banner stays visible on every tab, and says SIMULATED when the server cannot be read", async () => {
+  it("opens on a modal that says MOCK with the simulated line, closes on Got it, and stays away on a reload in the same session and on every tab", async () => {
+    const { unmount } = render(<App />);
+    const modal = await screen.findByTestId("mode-modal");
+    expect(modal).toHaveAttribute("data-mode", "mock");
+    expect(modal).toHaveTextContent(/MOCK/);
+    expect(modal).toHaveTextContent(/Everything here is simulated: synthetic PingOne events, a pretend subscription and a pretend cluster/);
+    expect(modal).toHaveTextContent(/Nothing is sent to PingOne or to any Elasticsearch or OpenSearch cluster/);
+    expect(screen.queryByTestId("banner")).toBeNull();
+    await userEvent.click(screen.getByTestId("mode-modal-ok"));
+    expect(screen.queryByTestId("mode-modal")).toBeNull();
+    unmount();
     await ready();
-    for (const name of ["Delivery", "Forward", "Pipeline", "Setup", "Talk track", "Events"]) { await nav(name); expect(screen.getByTestId("banner")).toBeVisible(); }
+    for (const name of ["Delivery", "Forward", "Pipeline", "Setup", "Talk track", "Events"]) { await nav(name); expect(screen.queryByTestId("mode-modal")).toBeNull(); expect(screen.queryByTestId("banner")).toBeNull(); }
   });
-  it("when both calls fail, the banner says SIMULATED and stays visible", async () => {
+  it("shows REAL, with the forwarding-is-UNVERIFIED line, when the app runs in Real, and holds the modal until /api/info answers", async () => {
+    state.realAvailable = true;
+    let release;
+    const gate = new Promise((r) => { release = r; });
+    const body = { mode: "real", source: "real", simulated: false, hosted: false, realAvailable: true, version: "1.0.0" };
+    override["/api/info"] = async () => { await gate; return { ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => body, text: async () => JSON.stringify(body) }; };
+    render(<App />);
+    await screen.findByText("Follow one sign-in");
+    expect(screen.queryByTestId("mode-modal")).toBeNull(); // held: no wrong MOCK flash on a Real build
+    release();
+    const modal = await screen.findByTestId("mode-modal");
+    expect(modal).toHaveAttribute("data-mode", "real");
+    expect(modal).toHaveTextContent(/REAL/);
+    expect(modal).toHaveTextContent(/Forwarding to your cluster stays OFF until you turn it on, and is UNVERIFIED against a live cluster/);
+  });
+  it("when both calls fail, the modal says MOCK, the safe thing", async () => {
     const dead = async () => ({ ok: false, status: 500, json: async () => ({}) });
     override["/api/info"] = dead; override["/api/scenarios"] = dead;
     render(<App />);
-    await waitFor(() => expect(screen.getByTestId("banner")).toHaveTextContent(BANNER_UNKNOWN));
-    expect(screen.getByTestId("banner")).toBeVisible();
+    expect(await screen.findByTestId("mode-modal")).toHaveAttribute("data-mode", "mock");
+    expect(screen.getByTestId("mode-modal")).toHaveTextContent(/Everything here is simulated/);
   });
 });
 
@@ -349,14 +375,13 @@ describe("setup, pipeline, talk track, presenter", () => {
     await userEvent.click(screen.getByTestId("reset"));
     await waitFor(() => expect(screen.queryByTestId("pattern-now")).toBeNull());
   });
-  it("presenter mode keeps the banner and shows the say-text; Esc leaves", async () => {
+  it("presenter mode shows the say-text; Esc leaves", async () => {
     await ready();
     await nav("Talk track");
     expect(screen.getByTestId("talk-track")).toHaveTextContent("Everything is simulated.");
     await nav("Events");
     await userEvent.keyboard("p");
     expect(await screen.findByTestId("presenter-say")).toHaveTextContent("Everything is simulated.");
-    expect(screen.getByTestId("banner")).toBeVisible();
     expect(document.querySelector(".app--presenter")).not.toBeNull();
     await userEvent.keyboard("{Escape}");
     expect(document.querySelector(".app--presenter")).toBeNull();
