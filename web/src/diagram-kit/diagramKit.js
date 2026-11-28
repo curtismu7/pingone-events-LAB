@@ -42,6 +42,8 @@ function reachable(from, next) {
  *   { id, label, sub, group: { key, label, color } | null, repo: { name, rev } | null,
  *     sources: [{ label, text, href }],              text is "path:lines"; href is a link to that file at the pinned commit, or null
  *     outgoing / incoming: [{ id, label, arrow }],    the box at the other end and the arrow's own label (or null)
+ *     calls: [{ id, arrow, hop }],                    the API calls on this box's arrows: an edge with a `hop` (a demo-hop/1 object,
+ *                                                     already redacted by shared/hop-detail) yields one entry per direction it touches
  *     upstream, downstream }
  */
 export function boxPassport(graph, id) {
@@ -65,6 +67,9 @@ export function boxPassport(graph, id) {
     sources: (n.sources ?? []).map((s) => ({ label: s.label || null, text: sourceLabel(s), href: sourceHref(graph.repo, s) })),
     outgoing: graph.edges.filter((e) => e.source === id && by.has(e.target)).map((e) => link(e, e.target)),
     incoming: graph.edges.filter((e) => e.target === id && by.has(e.source)).map((e) => link(e, e.source)),
+    calls: graph.edges
+      .filter((e) => (e.source === id || e.target === id) && e.hop && by.has(e.source) && by.has(e.target))
+      .map((e) => ({ id: e.id ?? `${e.source}->${e.target}`, from: e.source, to: e.target, arrow: e.label || null, hop: e.hop })),
     upstream: reachable(id, inn), downstream: reachable(id, out),
   };
 }

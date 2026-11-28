@@ -64,10 +64,29 @@ describe("boxPassport", () => {
     for (let t = 0; t < 200; t++) {
       const n = 2 + rnd(10); const nodes = Array.from({ length: n }, (_, i) => ({ id: `n${i}`, label: `N${i}` }));
       const edges = Array.from({ length: rnd(18) }, () => ({ source: `n${rnd(n)}`, target: `n${rnd(n)}` }));
-      let up = 0; let down = 0; let out = 0; let inn = 0;
-      for (const x of nodes) { const p = boxPassport({ nodes, edges }, x.id); up += p.upstream; down += p.downstream; out += p.outgoing.length; inn += p.incoming.length; expect(p.upstream).toBeLessThan(n); expect(p.downstream).toBeLessThan(n); }
-      expect(up).toBe(down); expect(out).toBe(edges.length); expect(inn).toBe(edges.length);
+      let up = 0; let down = 0; let out = 0; let inn = 0; let calls = 0;
+      for (const x of nodes) { const p = boxPassport({ nodes, edges }, x.id); up += p.upstream; down += p.downstream; out += p.outgoing.length; inn += p.incoming.length; calls += p.calls.length; expect(p.upstream).toBeLessThan(n); expect(p.downstream).toBeLessThan(n); }
+      expect(up).toBe(down); expect(out).toBe(edges.length); expect(inn).toBe(edges.length); expect(calls).toBe(0);
     }
+  });
+
+  describe("calls (the API calls on the box's arrows)", () => {
+    const hop = (n, kind = "token-exchange") => ({ n, kind, from: "a", to: "b", title: `Call ${n}`, narrative: "", fact: "tokens issued", verdict: "ok", spec: { refs: [{ label: "RFC 8693", url: "https://www.rfc-editor.org/rfc/rfc8693" }], mandate: "m", why: "w", failure: "f" }, request: { method: "POST" }, response: { status: 200 } });
+    const gd = (extra = {}) => g({ ...extra, edges: [{ source: "a", target: "b", label: "exchange", hop: hop(1) }, { source: "b", target: "c", hop: hop(2, "mcp-call") }, ...extra.edges ?? []] });
+    it("an edge with a hop gives every box it touches the call, with direction", () => {
+      const pa = boxPassport(gd(), "a"); const pb = boxPassport(gd(), "b");
+      expect(pa.calls).toEqual([{ id: "a->b", from: "a", to: "b", arrow: "exchange", hop: hop(1) }]);
+      expect(pb.calls.map((c) => [c.id, c.from, c.to])).toEqual([["a->b", "a", "b"], ["b->c", "b", "c"]]);
+    });
+    it("a box the hop does not touch has no calls; an edge without a hop adds none", () => {
+      expect(boxPassport(gd(), "e").calls).toEqual([]);
+      expect(boxPassport(gd({ edges: [{ source: "c", target: "d", hop: hop(3) }] }), "d").calls.length).toBe(1);
+      expect(boxPassport(g(), "a").calls).toEqual([]);
+    });
+    it("calls list nothing for an arrow to a ghost box", () => {
+      const d = gd({ edges: [{ source: "a", target: "ghost", hop: hop(9) }] });
+      expect(boxPassport(d, "a").calls.length).toBe(1); // only the real edge
+    });
   });
 });
 

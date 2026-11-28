@@ -105,3 +105,59 @@ describe("Passport", () => {
     expect(screen.getByTestId("dk-passport-url").value).toBe("http://lab.example/?box=b");
   });
 });
+
+describe("Passport calls (rule 24/24b: API calls and responses in the pop-up)", () => {
+  const sampleJwt = (payload) => `eyJhbGciOiJIUzUxMiJ9.${btoa(JSON.stringify(payload)).replace(/=+$/, "")}.s${"i".repeat(10)}g`;
+  const hop = (n, verdict = "ok") => ({ n, kind: "token-exchange", from: "a", to: "b", title: `Exchange ${n}`, narrative: "", fact: "tokens issued", verdict, spec: { refs: [{ label: "RFC 8693", title: "Token Exchange", url: "https://www.rfc-editor.org/rfc/rfc8693" }], mandate: "m", why: "w", failure: "f" }, request: { method: "POST", body: { grant_type: "urn:ietf:params:oauth:grant-type:token-exchange", access_token: sampleJwt({ sub: "user" }) } }, response: { status: 200, body: { access_token: sampleJwt({ sub: "agent" }) } } });
+  const graph = {
+    nodes: [{ id: "a", label: "Alpha" }, { id: "b", label: "Beta" }],
+    edges: [{ id: "e0", source: "a", target: "b", label: "exchange", hop: hop(1) }, { id: "e1", source: "b", target: "a", hop: hop(2, "deny") }],
+  };
+  const JsonView = ({ value, label }) => <div data-testid={`jsonview-${label}`}>{JSON.stringify(value)}</div>;
+  const mountCalls = (id = "a", extra = {}) => render(
+    <PassportActions.Provider value={{ open: vi.fn(), close: vi.fn(), link: () => "" }}><Passport p={boxPassport(graph, id)} JsonView={JsonView} {...extra} /></PassportActions.Provider>,
+  );
+  it("groups the calls Sent (outgoing) and Received (incoming), each with its verdict and fact", () => {
+    mountCalls();
+    expect(screen.getByTestId("dk-passport-sent")).toHaveTextContent("Sent · 1");
+    expect(screen.getByTestId("dk-passport-sent")).toHaveTextContent("Exchange 1");
+    expect(screen.getByTestId("dk-passport-sent")).toHaveTextContent("tokens issued");
+    expect(screen.getByTestId("dk-passport-received")).toHaveTextContent("Received · 1");
+    expect(screen.getByTestId("dk-passport-received").querySelector(".dk-call")).toHaveClass("dk-call--deny");
+    expect(screen.getByText("deny")).toBeInTheDocument();
+  });
+  it("a box with no hops shows none and no sections crash", () => {
+    mountCalls("b");
+    // b has one of each direction (both edges touch b)
+    expect(screen.getByTestId("dk-passport-sent")).toHaveTextContent("Sent · 1");
+  });
+  it("expanding a call shows request and response through the lab's JsonView, head as text for a wire transcript, and the spec refs", () => {
+    mountCalls();
+    expect(screen.queryByTestId("dk-call-request")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Exchange 1" }));
+    const req = screen.getByTestId("dk-call-request");
+    expect(req).toHaveTextContent("grant_type");
+    expect(screen.getByTestId("jsonview-Request")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Exchange 1" })); // collapse again
+    expect(screen.queryByTestId("jsonview-Request")).toBeNull();
+    // a wire-transcript response: head stays text, body parsed into the pane
+    const wt = { ...hop(3), request: "POST /token HTTP/1.1\nContent-Type: application/json\n\n{\"grant_type\":\"x\"}", response: "HTTP/1.1 200 OK\n\n{\"token_type\":\"Bearer\"}" };
+    const g2 = { nodes: graph.nodes, edges: [{ id: "e0", source: "a", target: "b", hop: wt }] };
+    cleanup();
+    render(<PassportActions.Provider value={{ open: vi.fn(), close: vi.fn(), link: () => "" }}><Passport p={boxPassport(g2, "a")} JsonView={JsonView} /></PassportActions.Provider>);
+    fireEvent.click(screen.getByRole("button", { name: /Exchange 3|token-exchange/ }));
+    expect(screen.getByTestId("dk-call-request")).toHaveTextContent("POST /token HTTP/1.1");
+    expect(screen.getByTestId("jsonview-Request")).toHaveTextContent("x");
+  });
+  it("without a JsonView the parts fall back to plain text (and the README says that is not the standard)", () => {
+    render(<PassportActions.Provider value={{ open: vi.fn(), close: vi.fn(), link: () => "" }}><Passport p={boxPassport(graph, "a")} /></PassportActions.Provider>);
+    fireEvent.click(screen.getByRole("button", { name: "Exchange 1" }));
+    expect(screen.getByTestId("dk-call-request").querySelector(".dk-call-plain")).toBeInTheDocument();
+  });
+  it("calls stay inert: clicking inside never collapses the box", () => {
+    const outer = vi.fn();
+    render(<div onClick={outer}><PassportActions.Provider value={{ open: vi.fn(), close: vi.fn(), link: () => "" }}><Passport p={boxPassport(graph, "a")} /></PassportActions.Provider></div>);
+    fireEvent.click(screen.getByRole("button", { name: "Exchange 1" }));
+    expect(outer).not.toHaveBeenCalled();
+  });
+});

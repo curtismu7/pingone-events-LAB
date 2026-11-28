@@ -92,14 +92,50 @@ export function FitOpen({ open, closePadding = 0.12 }) {
 /** What an expanded box can do: open another box (an arrow's far end), close itself, and build a link to itself. */
 export const PassportActions = createContext({ open: () => {}, close: () => {}, link: () => "" });
 
+/** Fallback renderer for a call part when a lab does not pass its JsonPane: plain text, never markup. */
+function PlainJson({ value }) {
+  return <pre className="dk-call-plain">{typeof value === "string" ? value : JSON.stringify(value, null, 2)}</pre>;
+}
+
+const callPart = (part) => {
+  if (part == null) return null;
+  if (typeof part === "string") {
+    const m = /^(?:(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) \S+(?: HTTP\/[\d.]+)?|HTTP\/[\d.]+ \d{3}.*)\s*$/m.exec(part.trim()) ? part : null;
+    // An HTTP transcript: head (status/request line + headers) as text, body parsed for the pane when it is JSON.
+    if (m) {
+      const split = /(\r?\n\r?\n)/.exec(part);
+      return split ? { head: part.slice(0, split.index), body: part.slice(split.index + split[0].length) } : { head: part, body: null };
+    }
+    try { return { body: JSON.parse(part) }; } catch { return { body: part }; }
+  }
+  return { body: part };
+};
+
+/** One part of a call (request or response): the wire head (request/status line + headers) as text, the body through JsonView. */
+function CallPart({ label, part, JsonView, hot }) {
+  if (!part) return null;
+  return (
+    <div className="dk-call-part" data-testid={`dk-call-${label.toLowerCase()}`}>
+      <p className="dk-call-head">{part.head ?? ""}</p>
+      {part.body != null && part.body !== "" && <JsonView value={part.body} label={label} hot={hot} />}
+    </div>
+  );
+}
+
+const verdictClass = { deny: "dk-call--deny", held: "dk-call--held", error: "dk-call--error", obligation: "dk-call--held" };
+
 /**
  * The details of one box (a boxPassport result), drawn inside the box when it is expanded. Text is React text only; the one link is
  * built from a validated GitHub URL. The whole block stops clicks and drags (nodrag nopan nowheel) so using it never moves the box,
  * pans the canvas or collapses the box.
+ *
+ * `JsonView` is how a call's request/response are shown: pass the lab's vendored shared JsonPane (default export, rules 24/24b —
+ * Form/JSON views, tokens decoded). Without it the parts render as plain text, which is a fallback, not the standard.
  */
-export function Passport({ p }) {
+export function Passport({ p, JsonView = PlainJson }) {
   const { open, close, link } = useContext(PassportActions);
   const [copy, setCopy] = useState({ state: "", url: "" });
+  const [openCall, setOpenCall] = useState(null);
   const copyLink = async () => {
     const url = link(p.id);
     try { await navigator.clipboard.writeText(url); setCopy({ state: "Copied", url: "" }); return; } catch { /* not a secure page, or no permission */ }
@@ -120,6 +156,34 @@ export function Passport({ p }) {
       )}
     </section>
   );
+  const calls = p.calls ?? [];
+  const callsList = (title, cs, testId) => (
+    <section aria-label={title} data-testid={testId} className={`dk-sec dk-sec--${title === "Sent" ? "out" : "in"}`}>
+      <h4>{title} · {cs.length}</h4>
+      {cs.length === 0 ? <p className="dk-passport-none">none</p> : (
+        <ul className="dk-passport-list">{cs.map((c, i) => {
+          const v = c.hop.verdict ?? "ok";
+          const isOpen = openCall === `${c.id}:${i}`;
+          return (
+            <li key={i} className={`dk-passport-row dk-call ${verdictClass[v] ?? ""}`}>
+              <button type="button" className="dk-passport-go" aria-expanded={isOpen} onClick={() => setOpenCall(isOpen ? null : `${c.id}:${i}`)}>
+                {c.hop.title ?? c.arrow ?? c.id}
+              </button>
+              <span className="dk-passport-arrow" title={c.hop.fact ?? ""}>{c.hop.fact ?? ""}</span>
+              <span className={`dk-call-verdict dk-call-verdict--${v}`}>{v}</span>
+              {isOpen && <div className="dk-call-detail">
+                <CallPart label="Request" part={callPart(c.hop.request)} JsonView={JsonView} hot={["grant_type", "scope", "aud", "sub", "act", "may_act"]} />
+                <CallPart label="Response" part={callPart(c.hop.response)} JsonView={JsonView} hot={["access_token", "error", "decision", "outcome", "verdict", "scope"]} />
+                {c.hop.spec?.refs?.length > 0 && (
+                  <p className="dk-call-refs">{c.hop.spec.refs.map((r, j) => <span key={j}>{j > 0 && " · "}<a href={r.url} target="_blank" rel="noopener noreferrer">{r.label}</a></span>)}</p>
+                )}
+              </div>}
+            </li>
+          );
+        })}</ul>
+      )}
+    </section>
+  );
   return (
     <div className="dk-passport nodrag nopan nowheel" data-testid={`dk-passport-${p.id}`} onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()}>
       {p.group && <div><span className="dk-passport-chip">{p.group.label}</span></div>}
@@ -133,6 +197,8 @@ export function Passport({ p }) {
         </section>
       )}
       <section aria-label="Reach" data-testid="dk-passport-reach" className="dk-sec dk-sec--reach"><h4>Reach</h4><p><span className="dk-up">Upstream {p.upstream}</span> · <span className="dk-down">Downstream {p.downstream}</span></p></section>
+      {callsList("Sent", calls.filter((c) => c.from === p.id), "dk-passport-sent")}
+      {callsList("Received", calls.filter((c) => c.to === p.id), "dk-passport-received")}
       {list("Outgoing", p.outgoing, "dk-passport-outgoing")}
       {list("Incoming", p.incoming, "dk-passport-incoming")}
       <div className="dk-passport-actions">
