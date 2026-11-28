@@ -31,7 +31,7 @@ const hashParts = () => {
 const savedTheme = () => { try { const t = window.localStorage.getItem("pev.theme"); return THEMES.includes(t) ? t : "auto"; } catch { return "auto"; } };
 
 export default function App() {
-  const [vertical, setVertical] = useState("retail");
+  const [vertical, setVertical] = useState("airlines");
   const [story, setStory] = useState(null);
   const [info, setInfo] = useState(undefined); // undefined = loading, null = failed
   const [error, setError] = useState(null);
@@ -101,7 +101,7 @@ export default function App() {
         <span className="shell-right">
           <TopMenu
             mode={{ value: info?.mode === "real" ? "real" : "mock", onChange: switchTo, realAvailable: info ? info.realAvailable : null, realHint: info?.realHint }}
-            vertical={{ value: vertical, onChange: setVertical, options: story ? story.verticals : ["retail"] }}
+            vertical={{ value: vertical, onChange: setVertical, options: story ? story.verticals : ["airlines"] }}
             theme={{ value: theme, onChange: setTheme }}
             fontSize={{ value: fontStep, onChange: setFontStep }}
             present={{ active: presenter, onToggle: () => setPresenter((v) => !v) }}
@@ -123,7 +123,7 @@ export default function App() {
           </div>
           {!presenter && (
             <label className="inline">Vertical{" "}
-              <select value={vertical} onChange={(e) => setVertical(e.target.value)}>{(story ? story.verticals : ["retail"]).map((v) => <option key={v} value={v}>{v}</option>)}</select>
+              <select value={vertical} onChange={(e) => setVertical(e.target.value)}>{(story ? story.verticals : ["airlines"]).map((v) => <option key={v} value={v}>{v}</option>)}</select>
             </label>
           )}
         </div>

@@ -15,6 +15,9 @@ It is the standalone version of the PingOne events page in AI-DEMO2 (read-only s
 - **Forward**: send each stored event to your Elasticsearch / OpenSearch bulk API (event id as document id, so retries are idempotent), after PingOne has been answered, through a bounded queue with capped retries. It is **off by default**; in Real it needs the target configured and an explicit confirm. Mock shows exactly what would be sent and lets you break the pretend cluster (429, 503, unreachable) to watch the same code cope.
 - **Pipeline**, **Setup** (the PingOne console fields, the Management API shape, the index template, a Kibana how-to, labelled facts) and **Talk track**.
 
+## The story
+The default story is **AirGuard Airlines** (a fictional airline; client `passenger-chat-agent`, host `airguard`), the `airlines` vertical. The `retail` (Northwind Retail), `health` (Contoso Health) and `finance` (Fabrikam Bank) packs stay in the Vertical selector, and a saved config that names one still works. An unknown vertical falls back to `airlines`. `customer.config.example.json` shows the four cast values you can override.
+
 ## Run it
 ```sh
 ./scripts/run.sh                      # host: install, build, preflight, start  ->  http://localhost:7803/

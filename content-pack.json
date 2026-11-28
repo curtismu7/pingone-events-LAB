@@ -78,7 +78,7 @@
     {
       "id": "try-follow-a-signin",
       "label": "Scenario 1: Follow one sign-in",
-      "description": "Northwind Retail's app (orders-agent) starts a flow, the password check passes, access is allowed and a session is created. Four events share ONE correlation id: that id, not the clock, is how you join them.",
+      "description": "AirGuard Airlines's app (passenger-chat-agent) starts a flow, the password check passes, access is allowed and a session is created. Four events share ONE correlation id: that id, not the clock, is how you join them.",
       "group": "try-it",
       "action": {
         "type": "route",
@@ -282,7 +282,7 @@
     {
       "id": "S01",
       "title": "Follow one sign-in",
-      "say": "Northwind Retail's app (orders-agent) starts a flow, the password check passes, access is allowed and a session is created. Four events share ONE correlation id: that id, not the clock, is how you join them."
+      "say": "AirGuard Airlines's app (passenger-chat-agent) starts a flow, the password check passes, access is allowed and a session is created. Four events share ONE correlation id: that id, not the clock, is how you join them."
     },
     {
       "id": "S02",
